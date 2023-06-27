@@ -7,6 +7,9 @@ import jakarta.validation.constraints.NotEmpty;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * класс <b>Пользователь</b>
+ */
 @Entity
 @Table(name = "Person")
 public class User {
@@ -17,25 +20,33 @@ public class User {
 
     @NotEmpty
     @NotEmpty
+    /** Имя пользователя */
     private String userName;
 
     @NotEmpty
     @NotEmpty
     @Email
+    /** e-mail пользователя */
     private String email;
 
     @NotEmpty
     @NotEmpty
+    /** зашифрованный пароль пользователя */
     private String password;
 
     @NotEmpty
     @NotEmpty
+    /** статус {@link UserStatus} пользователя */
     private UserStatus status;
 
     @NotEmpty
     @NotEmpty
+    /** роль (уровень доступа) {@link UserRole} пользователя */
     private UserRole role;
 
+    /** список проектов (папок) {@link Project} пользователя,
+     * для которых он является владельцем
+     * */
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     Set<Project> projectSet = new HashSet<>();
 

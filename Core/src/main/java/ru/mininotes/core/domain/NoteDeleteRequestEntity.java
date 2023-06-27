@@ -5,6 +5,9 @@ import jakarta.validation.constraints.NotEmpty;
 
 import java.util.Date;
 
+/**
+ * класс формирующий список заметок {@link Note} на удаление по истечению времени
+ */
 @Entity
 public class NoteDeleteRequestEntity {
 
@@ -14,9 +17,11 @@ public class NoteDeleteRequestEntity {
 
     @NotEmpty
     @NotEmpty
+    /** Дата и время, когда заметка должна быть удалена (без возможности удаления) */
     private Date deleteDateTime;
 
     @OneToOne
+    /** Указание на заметку для удаления */
     private Note note;
 
     public NoteDeleteRequestEntity() {

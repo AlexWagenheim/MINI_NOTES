@@ -7,6 +7,9 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * класс <b>Проект</b>
+ */
 @Entity
 public class Project {
     @Id
@@ -15,30 +18,51 @@ public class Project {
 
     @NotEmpty
     @NotEmpty
+    /** Заголовок */
     private String title;
 
     @NotEmpty
     @NotEmpty
+    /** Дата и время создания */
     private Date createdDateTime;
 
     @NotEmpty
     @NotEmpty
-    private boolean isPublic = false;
-
-    @NotEmpty
-    @NotEmpty
+    /** Дата и время последнего изменения */
     private Date lastUpdateDateTime;
 
+    @NotEmpty
+    @NotEmpty
+    /** Является ли проект публичным?
+     * true - все могут просматривать все заметки проекта
+     * false - у каждой заметки есть список пользователей {@link User},
+     * имеющих определённый уровень доступа к ней
+     * */
+    private boolean isPublic = false;
+
+    /** Владелец (создатель) {@link User} проекта */
     @ManyToOne(fetch = FetchType.LAZY)
     private User owner;
 
     @OneToMany
+    /** Список пользователей {@link User}, способных
+     * просматривать/создавать/редактировать/удалять все заметки {@link Note} в проекте
+     * */
     Set<User> editorGroup = new HashSet<>();
+
     @OneToMany
+    /** Список пользователей {@link User}, способных
+     * просматривать/редактировать все заметки {@link Note} в проекте
+     * */
     Set<User> moderatorGroup = new HashSet<>();
+
     @OneToMany
+    /** Список пользователей {@link User}, способных
+     * просматривать все заметки {@link Note} в проекте
+     * */
     Set<User> spectatorGroup = new HashSet<>();
 
+    /** Список заметок {@link Note} в проекте */
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     Set<Note> noteSet = new HashSet<>();
 

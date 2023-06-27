@@ -6,6 +6,9 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.Date;
 
+/**
+ * класс <b>Заметка</b>
+ */
 @Entity
 public class Note {
     @Id
@@ -14,25 +17,30 @@ public class Note {
 
     @NotEmpty
     @NotNull
+    /** Заголовок */
     private String title;
 
     @NotEmpty
     @NotNull
     @Column(columnDefinition="TEXT")
+    /** Основной текст */
     private String body;
 
     @NotEmpty
     @NotNull
+    /** Дата и время создания */
     private Date createdDateTime;
 
     @NotEmpty
     @NotNull
+    /** Дата и время последнего изменения */
     private Date lastUpdateDateTime;
 
     @NotEmpty
     @NotNull
+    /** Статус {@link NoteStatus} заметки */
     private NoteStatus status;
-
+    /** Проект {@link Project}, которому принадлежит заметка */
     @ManyToOne(fetch = FetchType.LAZY)
     private Project project;
 
