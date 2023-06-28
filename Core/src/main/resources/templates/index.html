@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <title>MINI NOTES</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" th:href="@{/node_modules/bootstrap/dist/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/styles/style.css}">
+    <script th:src="@{/node_modules/bootstrap/dist/js/bootstrap.min.js}"></script>
+</head>
+
+<header class="d-flex flex-wrap justify-content-center py-3 border-bottom pb-3 pt-3 ps-3 pe-3" sec:authorize="!isAuthenticated()">
+    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
+        <img th:src="@{/images/iconmonstr-note-primary-15-32.png}">
+        <span class="fs-3 text-primary fw-bold ms-2">MINI NOTES</span>
+    </a>
+
+    <ul class="nav nav-pills">
+        <li class="nav-item"><a href="#" class="nav-link active" aria-current="page">Главная</a></li>
+        <li class="nav-item"><a href="#" class="nav-link">Возможности</a></li>
+        <li class="nav-item"><a href="#" class="nav-link">Цены</a></li>
+        <li class="nav-item"><a href="#" class="nav-link">FAQs</a></li>
+        <li class="nav-item"><a href="#" class="nav-link">О проекте</a></li>
+    </ul>
+
+    <div class="btn-group">
+        <button type="button" class="btn btn-outline-primary me-2" th:onclick="location.href='/login';">Login</button>
+        <button type="button" class="btn btn-primary">Sign-up</button>
+    </div>
+</header>
+
+<header class="d-flex flex-wrap justify-content-center py-3 border-bottom pb-3 pt-3 ps-3 pe-3" sec:authorize="isAuthenticated()">
+    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
+        <img th:src="@{/images/iconmonstr-note-primary-15-32.png}">
+        <span class="fs-3 text-primary fw-bold ms-2">MINI NOTES</span>
+    </a>
+
+    <ul class="nav nav-pills">
+        <li class="nav-item"><a href="/" class="nav-link active" aria-current="page">Главная</a></li>
+        <li class="nav-item"><a href="#" class="nav-link">Возможности</a></li>
+        <li class="nav-item"><a href="#" class="nav-link">Цены</a></li>
+        <li class="nav-item"><a href="#" class="nav-link">FAQs</a></li>
+        <li class="nav-item"><a href="#" class="nav-link">О проекте</a></li>
+    </ul>
+
+    <form th:action="@{/logout}" method="post" id="logout_form">
+        <input type="hidden" name="var" value="val">
+    </form>
+    <div class="dropdown text-end">
+
+
+        <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+            <img th:src="@{/images/iconmonstr-user-circle-thin-32.png}" alt="mdo" width="32" height="32" class="rounded-circle">
+        </a>
+        <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1">
+<!--            <li><a class="dropdown-item" href="#">New project...</a></li>-->
+<!--            <li><a class="dropdown-item" href="#">Настройки</a></li>-->
+            <li><a class="dropdown-item" href="#" >Профиль</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" th:onclick="document.getElementById('logout_form').submit();">Выйти</a></li>
+        </ul>
+
+    </div>
+
+</header>
+
+<body>
+
+<div class="flex-md-equal w-100">
+    <div class="bg-primary pt-3 px-3 pt-md-5 px-md-5 text-center overflow-hidden">
+        <div class="my-3 p-3">
+            <h2 class="display-5 fw-bold text-white">MINI NOTES</h2>
+            <p class="lead text-white">Записать и не забыть!</p>
+        </div>
+        <div class="bg-body shadow-sm mx-auto" style="width: 80%; height: 400px; border-radius: 21px 21px 0 0;">
+            <div class="my-3 p-3">
+                <p class="lead">В проекте уже</p>
+                <h1 class="display-1 fw-bold">1 000 000 пользователей</h1>
+                <button type="button" class="btn btn-primary fs-1 fw-bold mt-5"
+                        th:onclick="location.href='/login';">
+                    Присоединиться!
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+
+<footer class="container py-5">
+    <div class="row">
+        <div class="col-12 col-md">
+            <img th:src="@{/images/iconmonstr-note-black-15-32.png}">
+            <small class="d-block mb-3 mt-3 text-muted">&copy; Wagenheim 2023</small>
+        </div>
+        <div class="col-6 col-md">
+            <h5>Features</h5>
+            <!-- <ul class="list-unstyled text-small">
+              <li><a class="link-secondary" href="#">Cool stuff</a></li>
+              <li><a class="link-secondary" href="#">Random feature</a></li>
+              <li><a class="link-secondary" href="#">Team feature</a></li>
+              <li><a class="link-secondary" href="#">Stuff for developers</a></li>
+              <li><a class="link-secondary" href="#">Another one</a></li>
+              <li><a class="link-secondary" href="#">Last time</a></li>
+            </ul> -->
+        </div>
+        <div class="col-6 col-md">
+            <h5>Resources</h5>
+            <!-- <ul class="list-unstyled text-small">
+              <li><a class="link-secondary" href="#">Resource name</a></li>
+              <li><a class="link-secondary" href="#">Resource</a></li>
+              <li><a class="link-secondary" href="#">Another resource</a></li>
+              <li><a class="link-secondary" href="#">Final resource</a></li>
+            </ul> -->
+        </div>
+        <div class="col-6 col-md">
+            <h5>Resources</h5>
+            <!-- <ul class="list-unstyled text-small">
+              <li><a class="link-secondary" href="#">Business</a></li>
+              <li><a class="link-secondary" href="#">Education</a></li>
+              <li><a class="link-secondary" href="#">Government</a></li>
+              <li><a class="link-secondary" href="#">Gaming</a></li>
+            </ul> -->
+        </div>
+        <div class="col-6 col-md">
+            <h5>About</h5>
+            <!-- <ul class="list-unstyled text-small">
+              <li><a class="link-secondary" href="#">Team</a></li>
+              <li><a class="link-secondary" href="#">Locations</a></li>
+              <li><a class="link-secondary" href="#">Privacy</a></li>
+              <li><a class="link-secondary" href="#">Terms</a></li>
+            </ul> -->
+        </div>
+    </div>
+</footer>
+<script th:src="@{/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js}"></script>
+</html>
