@@ -3,7 +3,13 @@ package ru.mininotes.core.domain;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -12,35 +18,31 @@ import java.util.Set;
  */
 @Entity
 @Table(name = "Person")
-public class User {
+public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
 
-    @NotEmpty
+    @NotNull
     @NotEmpty
     /** Имя пользователя */
-    private String userName;
+    private String username;
 
-    @NotEmpty
+    @NotNull
     @NotEmpty
     @Email
     /** e-mail пользователя */
     private String email;
 
-    @NotEmpty
+    @NotNull
     @NotEmpty
     /** зашифрованный пароль пользователя */
     private String password;
 
-    @NotEmpty
-    @NotEmpty
     /** статус {@link UserStatus} пользователя */
     private UserStatus status;
 
-    @NotEmpty
-    @NotEmpty
     /** роль (уровень доступа) {@link UserRole} пользователя */
     private UserRole role;
 
@@ -53,6 +55,65 @@ public class User {
     public User() {
     }
 
+    public User(String username, String email, String password, UserStatus status, UserRole role) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.status = status;
+        this.role = role;
+    }
+
+    public void addProject(Project project) {
+        projectSet.add(project);
+        project.setOwner(this);
+        project.getEditorGroup().add(this);
+        project.getModeratorGroup().add(this);
+        project.getSpectatorGroup().add(this);
+    }
+
+    public void removeProject(Project project) {
+        projectSet.remove(project);
+        project.getEditorGroup().remove(this);
+        project.getModeratorGroup().remove(this);
+        project.getSpectatorGroup().remove(this);
+        project.setOwner(null);
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Arrays.asList(new SimpleGrantedAuthority(role.toString()));
+    }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
+    @Override
+    public String getUsername() {
+        return username;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return status != UserStatus.BANNED;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+
     public long getId() {
         return id;
     }
@@ -61,12 +122,8 @@ public class User {
         this.id = id;
     }
 
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getEmail() {
@@ -75,10 +132,6 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
     }
 
     public void setPassword(String password) {

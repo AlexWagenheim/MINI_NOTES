@@ -5,7 +5,7 @@ package ru.mininotes.core.domain;
  */
 public enum UserRole {
     /** Авторизованный пользователь */
-    USER,
+    ROLE_USER,
     /** Авторизованный пользователь с правами администратора */
-    ADMIN
+    ROLE_ADMIN
 }

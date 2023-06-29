@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <title>Рабочее пространство</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" th:href="@{/node_modules/bootstrap/dist/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/styles/sidebar.css}">
+    <script th:src="@{/node_modules/jquery/dist/jquery.min.js}"></script>
+    <script th:src="@{/node_modules/@popperjs/core/dist/umd/popper.min.js}"></script>
+    <script th:src="@{/node_modules/bootstrap/dist/js/bootstrap.min.js}"></script>
+<!--    <script th:src="@{/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js}"></script>-->
+</head>
+
+<header class="d-flex flex-wrap justify-content-center py-3 border-bottom pb-3 pt-3 ps-3 pe-3" sec:authorize="isAuthenticated()">
+    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
+        <img th:src="@{/images/iconmonstr-note-primary-15-32.png}">
+        <span class="fs-3 text-primary fw-bold ms-2">MINI NOTES</span>
+    </a>
+
+    <form th:action="@{/logout}" method="post" id="logout_form">
+        <input type="hidden" name="var" value="val">
+    </form>
+
+    <span class="fs-5 text-primary fw-bold ms-2 me-2 mt-1" th:text="${username}"></span>
+
+    <div class="dropdown text-end mt-1">
+
+        <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+            <img th:src="@{/images/iconmonstr-user-circle-thin-32.png}" alt="mdo" width="32" height="32" class="rounded-circle">
+        </a>
+        <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1">
+            <!--            <li><a class="dropdown-item" href="#">New project...</a></li>-->
+            <!--            <li><a class="dropdown-item" href="#">Настройки</a></li>-->
+            <li><a class="dropdown-item" href="#" >Профиль</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" th:onclick="document.getElementById('logout_form').submit();">Выйти</a></li>
+        </ul>
+
+    </div>
+
+</header>
+<script>
+    (function () {
+  'use strict'
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+    new bootstrap.Tooltip(tooltipTriggerEl)
+  })
+})()
+</script>
+<body>
+<div class="container-fluid" style="min-height: 800px;">
+    <div class="row flex-nowrap">
+        <div class="flex-shrink-0 p-3 bg-white" style="width: 280px;">
+            <span class="d-flex align-items-center pb-3 mb-3 link-dark text-decoration-none border-bottom">
+<!--                <svg class="bi me-2" width="30" height="24"><use xlink:href="#bootstrap"/></svg>-->
+                <span class="fs-5 fw-semibold">Проекты</span>
+                <span style="margin-left: 125px;"><a class="link-underline-light" th:href="@{/project/add}"><img th:src="@{/images/iconmonstr-folder-24-32.png}"></a></span>
+            </span>
+            <ul class="list-unstyled ps-0">
+                <li class="empty_list text-primary" th:if="${#lists.isEmpty(user.projectSet)}">
+                    Список проектов пуст
+                </li>
+                <li class="mb-1" th:each="folder: ${user.projectSet}">
+                    <button class="btn btn-toggle align-items-center rounded collapsed"
+                            data-bs-toggle="collapse" data-bs-target="#${folder.title}-collapse" aria-expanded="false" th:text="${folder.title}">
+
+                    </button>
+                    <div class="collapse" id="${folder.title}-collapse">
+                        <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+                            <li><a href="#" class="link-dark rounded">Overview</a></li>
+                            <li><a href="#" class="link-dark rounded">Updates</a></li>
+                            <li><a href="#" class="link-dark rounded">Reports</a></li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="mb-1">
+                    <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#home-collapse" aria-expanded="true">
+                        Home
+                    </button>
+                    <div class="collapse show" id="home-collapse">
+                        <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+                            <li><a href="#" class="link-dark rounded">Overview</a></li>
+                            <li><a href="#" class="link-dark rounded">Updates</a></li>
+                            <li><a href="#" class="link-dark rounded">Reports</a></li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="mb-1">
+                    <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#dashboard-collapse" aria-expanded="false">
+                        Dashboard
+                    </button>
+                    <div class="collapse" id="dashboard-collapse">
+                        <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+                            <li><a href="#" class="link-dark rounded">Overview</a></li>
+                            <li><a href="#" class="link-dark rounded">Weekly</a></li>
+                            <li><a href="#" class="link-dark rounded">Monthly</a></li>
+                            <li><a href="#" class="link-dark rounded">Annually</a></li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="mb-1">
+                    <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#orders-collapse" aria-expanded="false">
+                        Orders
+                    </button>
+                    <div class="collapse" id="orders-collapse">
+                        <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+                            <li><a href="#" class="link-dark rounded">New</a></li>
+                            <li><a href="#" class="link-dark rounded">Processed</a></li>
+                            <li><a href="#" class="link-dark rounded">Shipped</a></li>
+                            <li><a href="#" class="link-dark rounded">Returned</a></li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="border-top my-3"></li>
+                <li class="mb-1">
+                    <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#account-collapse" aria-expanded="false">
+                        Account
+                    </button>
+                    <div class="collapse" id="account-collapse">
+                        <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+                            <li><a href="#" class="link-dark rounded">New...</a></li>
+                            <li><a href="#" class="link-dark rounded">Profile</a></li>
+                            <li><a href="#" class="link-dark rounded">Settings</a></li>
+                            <li><a href="#" class="link-dark rounded">Sign out</a></li>
+                        </ul>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="col py-3">
+            <h1>Информация о работе с сервисом</h1>
+
+        </div>
+
+    </div>
+</div>
+</body>
+
+<footer class="container py-5">
+    <div class="row">
+        <div class="col-12 col-md">
+            <img th:src="@{/images/iconmonstr-note-black-15-32.png}">
+            <small class="d-block mb-3 mt-3 text-muted">&copy; Wagenheim 2023</small>
+        </div>
+        <div class="col-6 col-md">
+            <h5>Features</h5>
+            <!-- <ul class="list-unstyled text-small">
+              <li><a class="link-secondary" href="#">Cool stuff</a></li>
+              <li><a class="link-secondary" href="#">Random feature</a></li>
+              <li><a class="link-secondary" href="#">Team feature</a></li>
+              <li><a class="link-secondary" href="#">Stuff for developers</a></li>
+              <li><a class="link-secondary" href="#">Another one</a></li>
+              <li><a class="link-secondary" href="#">Last time</a></li>
+            </ul> -->
+        </div>
+        <div class="col-6 col-md">
+            <h5>Resources</h5>
+            <!-- <ul class="list-unstyled text-small">
+              <li><a class="link-secondary" href="#">Resource name</a></li>
+              <li><a class="link-secondary" href="#">Resource</a></li>
+              <li><a class="link-secondary" href="#">Another resource</a></li>
+              <li><a class="link-secondary" href="#">Final resource</a></li>
+            </ul> -->
+        </div>
+        <div class="col-6 col-md">
+            <h5>Resources</h5>
+            <!-- <ul class="list-unstyled text-small">
+              <li><a class="link-secondary" href="#">Business</a></li>
+              <li><a class="link-secondary" href="#">Education</a></li>
+              <li><a class="link-secondary" href="#">Government</a></li>
+              <li><a class="link-secondary" href="#">Gaming</a></li>
+            </ul> -->
+        </div>
+        <div class="col-6 col-md">
+            <h5>About</h5>
+            <!-- <ul class="list-unstyled text-small">
+              <li><a class="link-secondary" href="#">Team</a></li>
+              <li><a class="link-secondary" href="#">Locations</a></li>
+              <li><a class="link-secondary" href="#">Privacy</a></li>
+              <li><a class="link-secondary" href="#">Terms</a></li>
+            </ul> -->
+        </div>
+    </div>
+</footer>
+
+</html>

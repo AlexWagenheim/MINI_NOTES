@@ -2,6 +2,7 @@ package ru.mininotes.core.domain;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.Date;
 import java.util.HashSet;
@@ -16,23 +17,20 @@ public class Project {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
 
-    @NotEmpty
+    @NotNull
     @NotEmpty
     /** Заголовок */
     private String title;
 
-    @NotEmpty
-    @NotEmpty
+    @NotNull
     /** Дата и время создания */
     private Date createdDateTime;
 
-    @NotEmpty
-    @NotEmpty
+    @NotNull
     /** Дата и время последнего изменения */
     private Date lastUpdateDateTime;
 
-    @NotEmpty
-    @NotEmpty
+    @NotNull
     /** Является ли проект публичным?
      * true - все могут просматривать все заметки проекта
      * false - у каждой заметки есть список пользователей {@link User},
@@ -44,19 +42,19 @@ public class Project {
     @ManyToOne(fetch = FetchType.LAZY)
     private User owner;
 
-    @OneToMany
+    @ManyToMany
     /** Список пользователей {@link User}, способных
      * просматривать/создавать/редактировать/удалять все заметки {@link Note} в проекте
      * */
     Set<User> editorGroup = new HashSet<>();
 
-    @OneToMany
+    @ManyToMany
     /** Список пользователей {@link User}, способных
      * просматривать/редактировать все заметки {@link Note} в проекте
      * */
     Set<User> moderatorGroup = new HashSet<>();
 
-    @OneToMany
+    @ManyToMany
     /** Список пользователей {@link User}, способных
      * просматривать все заметки {@link Note} в проекте
      * */
@@ -67,6 +65,13 @@ public class Project {
     Set<Note> noteSet = new HashSet<>();
 
     public Project() {
+    }
+
+    public Project(String title, Date createdDateTime, boolean isPublic) {
+        this.title = title;
+        this.createdDateTime = createdDateTime;
+        this.lastUpdateDateTime = createdDateTime;
+        this.isPublic = isPublic;
     }
 
     public long getId() {

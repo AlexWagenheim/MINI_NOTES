@@ -1,10 +1,44 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Регистрация</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" th:href="@{/node_modules/bootstrap/dist/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/styles/login.css}">
+    <script th:src="@{/node_modules/bootstrap/dist/js/bootstrap.min.js}"></script>
 </head>
-<body>
+<body class="text-center">
+<main class="form-signin">
+    <form th:action="@{/signup}" method="post" th:object="${user}">
+        <img class="mb-4" th:src="@{/images/iconmonstr-user-circle-thin-240.png}" alt="">
+        <h1 class="h3 mb-3 fw-normal">Регистрация</h1>
 
+<!--        <p th:if="${param.error}" class="text-danger">Неверная пара Логин/Пароль</p>-->
+<!--        <p th:if="${param.logout}" class="text-info">Вы успешно вышли из системы</p>-->
+        <div class="form-floating">
+            <input type="email" class="form-control" id="floatingEmail" placeholder="name@example.com" name="email">
+            <label for="floatingEmail">E-mail адрес</label>
+        </div>
+        <div class="form-floating">
+            <input type="text" class="form-control" id="floatingInput" placeholder="Логин" name="username">
+            <label for="floatingInput">Имя пользователя</label>
+        </div>
+        <div class="form-floating">
+            <input type="password" class="form-control" id="floatingPassword1" placeholder="Пароль" name="password">
+            <label for="floatingPassword1">Пароль</label>
+        </div>
+        <div class="form-floating">
+            <input type="password" class="form-control" id="floatingRepeatPassword1" placeholder="Пароль" name="passwordConfirm">
+            <label for="floatingRepeatPassword1">Повторите пароль</label>
+        </div>
+
+        <p>Уже есть аккаунт? <a th:href="@{/login}" class="link-underline-light">Войти</a></p>
+
+        <button class="w-100 btn btn-lg btn-primary mt-3" type="submit">Зарегистрироваться</button>
+    </form>
+</main>
 </body>
 </html>

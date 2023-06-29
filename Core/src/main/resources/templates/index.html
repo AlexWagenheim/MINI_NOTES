@@ -8,6 +8,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" th:href="@{/node_modules/bootstrap/dist/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/styles/style.css}">
+    <script th:src="@{/node_modules/jquery/dist/jquery.min.js}"></script>
+    <script th:src="@{/node_modules/@popperjs/core/dist/umd/popper.min.js}"></script>
     <script th:src="@{/node_modules/bootstrap/dist/js/bootstrap.min.js}"></script>
 </head>
 
@@ -27,43 +29,8 @@
 
     <div class="btn-group">
         <button type="button" class="btn btn-outline-primary me-2" th:onclick="location.href='/login';">Login</button>
-        <button type="button" class="btn btn-primary">Sign-up</button>
+        <button type="button" class="btn btn-primary" th:onclick="location.href='/signup';">Sign-up</button>
     </div>
-</header>
-
-<header class="d-flex flex-wrap justify-content-center py-3 border-bottom pb-3 pt-3 ps-3 pe-3" sec:authorize="isAuthenticated()">
-    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
-        <img th:src="@{/images/iconmonstr-note-primary-15-32.png}">
-        <span class="fs-3 text-primary fw-bold ms-2">MINI NOTES</span>
-    </a>
-
-    <ul class="nav nav-pills">
-        <li class="nav-item"><a href="/" class="nav-link active" aria-current="page">Главная</a></li>
-        <li class="nav-item"><a href="#" class="nav-link">Возможности</a></li>
-        <li class="nav-item"><a href="#" class="nav-link">Цены</a></li>
-        <li class="nav-item"><a href="#" class="nav-link">FAQs</a></li>
-        <li class="nav-item"><a href="#" class="nav-link">О проекте</a></li>
-    </ul>
-
-    <form th:action="@{/logout}" method="post" id="logout_form">
-        <input type="hidden" name="var" value="val">
-    </form>
-    <div class="dropdown text-end">
-
-
-        <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-            <img th:src="@{/images/iconmonstr-user-circle-thin-32.png}" alt="mdo" width="32" height="32" class="rounded-circle">
-        </a>
-        <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1">
-<!--            <li><a class="dropdown-item" href="#">New project...</a></li>-->
-<!--            <li><a class="dropdown-item" href="#">Настройки</a></li>-->
-            <li><a class="dropdown-item" href="#" >Профиль</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#" th:onclick="document.getElementById('logout_form').submit();">Выйти</a></li>
-        </ul>
-
-    </div>
-
 </header>
 
 <body>
@@ -135,5 +102,5 @@
         </div>
     </div>
 </footer>
-<script th:src="@{/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js}"></script>
+
 </html>
