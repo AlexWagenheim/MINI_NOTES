@@ -1,2 +1,10 @@
-
+.mini_button:hover,
+.mini_button:focus {
+    background-color: #6c757d;
+}
+.mini_button {
+    width: 30px;
+    height: 28px;
+    border-radius: 5px;
+}
 

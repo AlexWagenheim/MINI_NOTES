@@ -67,6 +67,18 @@ public class Project {
     public Project() {
     }
 
+    public void addNote(Note note) {
+        noteSet.add(note);
+        note.setProject(this);
+        this.lastUpdateDateTime = new Date();
+    }
+
+    public void removeNote(Note note) {
+        noteSet.remove(note);
+        note.setProject(null);
+        this.lastUpdateDateTime = new Date();
+    }
+
     public Project(String title, Date createdDateTime, boolean isPublic) {
         this.title = title;
         this.createdDateTime = createdDateTime;

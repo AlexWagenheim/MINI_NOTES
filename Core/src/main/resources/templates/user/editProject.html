@@ -4,7 +4,7 @@
       xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
 <head>
     <meta charset="UTF-8">
-    <title>Новый проект</title>
+    <title th:text="${project.title}"></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" th:href="@{/node_modules/bootstrap/dist/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/styles/sidebar.css}">
@@ -13,6 +13,7 @@
     <script th:src="@{/node_modules/@popperjs/core/dist/umd/popper.min.js}"></script>
     <script th:src="@{/node_modules/bootstrap/dist/js/bootstrap.min.js}"></script>
 <!--    <script th:src="@{/js/sidebar.js}"></script>-->
+<!--    <script th:src="@{/js/modal.js}"></script>-->
     <!--    <script th:src="@{/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js}"></script>-->
 </head>
 
@@ -103,30 +104,68 @@
 
         <div class="col py-3">
             <div style="width: 700px;">
-                <h1>Создать новый проект</h1>
-                <form th:action="@{/{username}/project/add(username=${user.username})}" method="post" th:object="${project}">
+                <h1>Редактирование проекта</h1>
+                <form th:action="@{/{username}/project/{projectId}/settings(username=${user.username}, projectId=${project.id})}" method="post" th:object="${editProject}">
                     <input type="hidden"
                            th:name="${_csrf.parameterName}"
                            th:value="${_csrf.token}" />
                     <div class="mb-3">
                         <label for="titleInput" class="form-label">Название проекта</label>
-                        <input type="text" class="form-control" id="titleInput" aria-describedby="emailHelp" name="title">
+                        <input type="text" class="form-control" id="titleInput" aria-describedby="emailHelp" name="title" th:value="${project.title}">
                         <div class="form-text text-danger"><span th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></span></div>
                     </div>
-<!--                    <div class="mb-3 form-check">-->
-<!--                        <input type="checkbox" class="form-check-input" id="exampleCheck1" name="isPublic" th:checked="${isPublic}">-->
-<!--                        <label class="form-check-label" for="exampleCheck1">Публичный проект (виден всем)</label>-->
-<!--                    </div>-->
+                    <!--                    <div class="mb-3 form-check">-->
+                    <!--                        <input type="checkbox" class="form-check-input" id="exampleCheck1" name="isPublic" th:checked="${isPublic}">-->
+                    <!--                        <label class="form-check-label" for="exampleCheck1">Публичный проект (виден всем)</label>-->
+                    <!--                    </div>-->
                     <div class="mb-3">
                         <label class="form-label" for="status_select">Доступность проекта</label>
                         <select id="status_select" class="form-select" aria-label="Default select example" name="status">
-                            <option value="private">Приватный (виден Вам и выбранным Вами пользователям)</option>
-                            <option value="public">Публичный (виден всем)</option>
+                            <option value="private" th:selected="${!project.isPublic}">Приватный (виден Вам и выбранным Вами пользователям)</option>
+                            <option value="public" th:selected="${project.isPublic}">Публичный (виден всем)</option>
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-primary">Создать</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
                 </form>
             </div>
+        </div>
+        <div class="col py-5">
+            <p><span class="fs-3 fw-bold">Создатель:</span><span th:text="${'@' + user.username}" class="ms-2 fs-5"></span></p>
+            <p><span class="fs-5">Создан:</span><span th:text="${#strings.substringBefore(project.createdDateTime,' ')}" class="ms-2"></span></p>
+            <p><span class="fs-5 ">Последнее изменение:</span><span th:text="${#strings.substringBefore(project.lastUpdateDateTime,' ')}" class="ms-2"></span></p>
+        </div>
+        <div class="col py-5 float-end pe-5">
+            <button type="submit" class="btn btn-outline-danger float-end" data-bs-toggle="modal" data-bs-target="#exampleModalCenter">Удалить</button>
+
+            <!-- Button trigger modal -->
+<!--            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModalCenter">-->
+<!--                Launch demo modal-->
+<!--            </button>-->
+
+            <!-- Modal -->
+            <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLongTitle" th:text="${project.title}"></h5>
+                        </div>
+                        <div class="modal-body">
+                            <p class="fs-4">Вы действительно хотите удалить этот проект?</p>
+                            <p class="text-danger">Это действие будет невозможно отменить</p>
+                        </div>
+                        <div class="modal-footer">
+                            <form th:action="@{/{username}/project/{projectId}/delete(username=${user.username}, projectId=${project.id})}" method="post">
+                                <input type="hidden"
+                                       th:name="${_csrf.parameterName}"
+                                       th:value="${_csrf.token}" />
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                <button type="submit" class="btn btn-outline-danger">Удалить</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>

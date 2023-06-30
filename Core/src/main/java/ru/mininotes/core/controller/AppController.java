@@ -9,13 +9,15 @@ import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import ru.mininotes.core.domain.Project;
-import ru.mininotes.core.domain.User;
-import ru.mininotes.core.domain.UserRole;
-import ru.mininotes.core.domain.UserStatus;
+import ru.mininotes.core.domain.*;
+import ru.mininotes.core.domain.requestEntity.NoteRq;
+import ru.mininotes.core.domain.requestEntity.ProjectEditRq;
 import ru.mininotes.core.domain.requestEntity.ProjectRq;
 import ru.mininotes.core.domain.requestEntity.SignUpRq;
+import ru.mininotes.core.repository.NoteRepository;
+import ru.mininotes.core.repository.ProjectRepository;
 import ru.mininotes.core.repository.UserRepository;
 
 import java.security.Principal;
@@ -26,11 +28,15 @@ import java.util.Optional;
 public class AppController {
 
     private UserRepository userRepository;
+    private ProjectRepository projectRepository;
+    private NoteRepository noteRepository;
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    public AppController(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AppController(UserRepository userRepository, ProjectRepository projectRepository, NoteRepository noteRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.projectRepository = projectRepository;
+        this.noteRepository = noteRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -39,9 +45,20 @@ public class AppController {
         if (principal == null) {
             return "index";
         } else {
+//            model.addAttribute("username", principal.getName());
+//            model.addAttribute("user", userRepository.getUserByUsername(principal.getName()).get());
+            return "redirect:/" + principal.getName();
+        }
+    }
+
+    @GetMapping(value = "/{username}")
+    public String workspace(@PathVariable("username") String username, Principal principal, Model model) {
+        if (principal.getName().equals(username) || userRepository.getUserByUsername(principal.getName()).get().getRole().equals(UserRole.ROLE_ADMIN)) {
             model.addAttribute("username", principal.getName());
-            model.addAttribute("user", userRepository.getUserByUsername(principal.getName()).get());
+            model.addAttribute("user", userRepository.getUserByUsername(username).get());
             return "user/workspace";
+        } else {
+            return "redirect:/";
         }
     }
 
@@ -60,7 +77,7 @@ public class AppController {
             model.addAttribute("user", new SignUpRq());
             return "signup";
         } else {
-            return "redirect:/";
+            return "redirect:/" + principal.getName();
         }
     }
 
@@ -99,27 +116,185 @@ public class AppController {
         return "redirect:/";
     }
 
-    @GetMapping(value = "/project/add")
-    public String getAddProjectPage(Principal principal, Model model) {
-        if (principal == null) {
-            return "redirect:/error";
-        } else {
+    @GetMapping(value = "/{username}/project/add")
+    public String getAddProjectPage(@PathVariable("username") String username, Principal principal, Model model) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        if(!optionalUser.isPresent()) {
+            return "redirect:/";
+        } else if(principal.getName().equals(username) || userRepository.getUserByUsername(principal.getName()).get().getRole().equals(UserRole.ROLE_ADMIN)) {
+            model.addAttribute("username", principal.getName());
+            model.addAttribute("user", optionalUser.get());
             model.addAttribute("project", new ProjectRq());
             return "user/addProject";
+        } else {
+            return "redirect:/";
         }
     }
 
-    @PostMapping(value = "/project/add")
-    public String addProject(@ModelAttribute("project") @Valid ProjectRq projectRq, Errors errors, Principal principal, Model model) {
-        System.out.println(projectRq.getTitle());
-        System.out.println(projectRq.getStatus());
-        if(errors.hasErrors()) {
-            return "user/addProject";
+    @PostMapping(value = "/{username}/project/add")
+    public String addProject(@PathVariable("username") String username,
+                             @ModelAttribute("project") @Valid ProjectRq projectRq,
+                             Errors errors,
+                             Principal principal,
+                             Model model) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        if(!optionalUser.isPresent()) {
+            return "redirect:/error";
+        } else if(principal.getName().equals(username) || userRepository.getUserByUsername(principal.getName()).get().getRole().equals(UserRole.ROLE_ADMIN)) {
+            model.addAttribute("username", principal.getName());
+            model.addAttribute("user", optionalUser.get());
+            if(errors.hasErrors()) {
+                return "user/addProject";
+            } else {
+                User user = optionalUser.get();
+                user.addProject(new Project(projectRq.getTitle(), new Date(), projectRq.getStatus().equals("public")));
+                userRepository.save(user);
+                return "redirect:/" + username;
+            }
         } else {
-            User user = userRepository.getUserByUsername(principal.getName()).get();
-            user.addProject(new Project(projectRq.getTitle(), new Date(), projectRq.getStatus().equals("public")));
-            userRepository.save(user);
             return "redirect:/";
+        }
+    }
+
+    @GetMapping(value = "/{username}/project/{projectId}/settings")
+    public String getEditProjectPage(@PathVariable("username") String username,
+                                    @PathVariable("projectId") long projectId,
+                                    Principal principal,
+                                    Model model) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        Optional<Project> optionalProject = projectRepository.findById(projectId);
+        if (!optionalUser.isPresent() || !optionalProject.isPresent()) {
+            return "redirect:/error";
+        } else {
+            User loginUser = userRepository.getUserByUsername(principal.getName()).get();
+            User projectUser = optionalUser.get();
+            Project project = optionalProject.get();
+            if (project.getOwner().equals(loginUser) || project.getEditorGroup().contains(loginUser) || loginUser.getRole().equals(UserRole.ROLE_ADMIN)) {
+                model.addAttribute("username", principal.getName());
+                model.addAttribute("user", projectUser);
+                model.addAttribute("project", project);
+                model.addAttribute("editProject", new ProjectEditRq());
+                return "user/editProject";
+            } else {
+                return "redirect:/error";
+            }
+        }
+    }
+
+    @PostMapping(value = "/{username}/project/{projectId}/settings")
+    public String editProject(@PathVariable("username") String username,
+                              @PathVariable("projectId") long projectId,
+                              @ModelAttribute("editProject") @Valid ProjectEditRq projectEditRq,
+                              Errors errors,
+                              Principal principal,
+                              Model model) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        Optional<Project> optionalProject = projectRepository.findById(projectId);
+        if (!optionalUser.isPresent() || !optionalProject.isPresent()) {
+            return "redirect:/error";
+        } else {
+            User loginUser = userRepository.getUserByUsername(principal.getName()).get();
+            User projectUser = optionalUser.get();
+            Project project = optionalProject.get();
+            if (project.getOwner().equals(loginUser) || project.getEditorGroup().contains(loginUser) || loginUser.getRole().equals(UserRole.ROLE_ADMIN)) {
+                model.addAttribute("username", principal.getName());
+                model.addAttribute("user", projectUser);
+                model.addAttribute("project", project);
+                if(errors.hasErrors()) {
+                    return "user/editProject";
+                } else {
+                    project.setTitle(projectEditRq.getTitle());
+                    project.setPublic(projectEditRq.getStatus().equals("public"));
+                    project.setLastUpdateDateTime(new Date());
+                    projectRepository.save(project);
+                    return "redirect:/" + username;
+                }
+            } else {
+                return "redirect:/error";
+            }
+        }
+    }
+
+    @PostMapping(value = "/{username}/project/{projectId}/delete")
+    public String deleteProject(@PathVariable("username") String username,
+                              @PathVariable("projectId") long projectId,
+                              Principal principal,
+                              Model model) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        Optional<Project> optionalProject = projectRepository.findById(projectId);
+        if (!optionalUser.isPresent() || !optionalProject.isPresent()) {
+            return "redirect:/error";
+        } else {
+            User loginUser = userRepository.getUserByUsername(principal.getName()).get();
+            User projectUser = optionalUser.get();
+            Project project = optionalProject.get();
+            if (project.getOwner().equals(loginUser) || project.getEditorGroup().contains(loginUser) || loginUser.getRole().equals(UserRole.ROLE_ADMIN)) {
+                projectUser.removeProject(project);
+                userRepository.save(projectUser);
+                return "redirect:/" + username;
+            } else {
+                return "redirect:/error";
+            }
+        }
+    }
+
+    @GetMapping(value = "/{username}/project/{projectId}/note/add")
+    public String getAddNotePage(@PathVariable("username") String username,
+                                     @PathVariable("projectId") long projectId,
+                                     Principal principal,
+                                     Model model) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        Optional<Project> optionalProject = projectRepository.findById(projectId);
+        if (!optionalUser.isPresent() || !optionalProject.isPresent()) {
+            return "redirect:/error";
+        } else {
+            User loginUser = userRepository.getUserByUsername(principal.getName()).get();
+            User projectUser = optionalUser.get();
+            Project project = optionalProject.get();
+            if (project.getOwner().equals(loginUser) || project.getEditorGroup().contains(loginUser) || loginUser.getRole().equals(UserRole.ROLE_ADMIN)) {
+                model.addAttribute("username", principal.getName());
+                model.addAttribute("user", projectUser);
+                model.addAttribute("project", project);
+                model.addAttribute("note", new NoteRq());
+                return "user/addNote";
+            } else {
+                return "redirect:/error";
+            }
+        }
+    }
+
+    @PostMapping(value = "/{username}/project/{projectId}/note/add")
+    public String addNote(@PathVariable("username") String username,
+                          @PathVariable("projectId") long projectId,
+                          @ModelAttribute("note") @Valid NoteRq noteRq,
+                          Errors errors,
+                          Principal principal,
+                          Model model) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        Optional<Project> optionalProject = projectRepository.findById(projectId);
+        if (!optionalUser.isPresent() || !optionalProject.isPresent()) {
+            return "redirect:/error";
+        } else if(principal.getName().equals(username) || userRepository.getUserByUsername(principal.getName()).get().getRole().equals(UserRole.ROLE_ADMIN)) {
+            model.addAttribute("username", principal.getName());
+            model.addAttribute("user", optionalUser.get());
+            model.addAttribute("project", optionalProject.get());
+            if(errors.hasErrors()) {
+                return "user/addNote";
+            } else {
+                Project project = optionalProject.get();
+                Note note = new Note();
+                note.setTitle(noteRq.getTitle());
+                note.setBody(noteRq.getBody());
+                note.setStatus(NoteStatus.ACTIVE);
+                Date date = new Date();
+                note.setCreatedDateTime(date);
+                note.setLastUpdateDateTime(date);
+                project.addNote(note);
+                projectRepository.save(project);
+                return "redirect:/" + username;
+            }
+        } else {
+            return "redirect:/error";
         }
     }
 }

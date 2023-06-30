@@ -4,7 +4,7 @@
       xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
 <head>
     <meta charset="UTF-8">
-    <title>Новый проект</title>
+    <title>Новая заметка</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" th:href="@{/node_modules/bootstrap/dist/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/styles/sidebar.css}">
@@ -12,7 +12,7 @@
     <script th:src="@{/node_modules/jquery/dist/jquery.min.js}"></script>
     <script th:src="@{/node_modules/@popperjs/core/dist/umd/popper.min.js}"></script>
     <script th:src="@{/node_modules/bootstrap/dist/js/bootstrap.min.js}"></script>
-<!--    <script th:src="@{/js/sidebar.js}"></script>-->
+    <!--    <script th:src="@{/js/sidebar.js}"></script>-->
     <!--    <script th:src="@{/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js}"></script>-->
 </head>
 
@@ -102,27 +102,21 @@
         </div>
 
         <div class="col py-3">
+            <h1>Создать новую заметку в проекте <span th:text="${project.title}"></span></h1>
             <div style="width: 700px;">
-                <h1>Создать новый проект</h1>
-                <form th:action="@{/{username}/project/add(username=${user.username})}" method="post" th:object="${project}">
+                <form th:action="@{/{username}/project/{projectId}/note/add(username=${user.username}, projectId=${project.id})}" method="post" th:object="${note}">
                     <input type="hidden"
                            th:name="${_csrf.parameterName}"
                            th:value="${_csrf.token}" />
                     <div class="mb-3">
-                        <label for="titleInput" class="form-label">Название проекта</label>
+                        <label for="titleInput" class="form-label">Заголовок</label>
                         <input type="text" class="form-control" id="titleInput" aria-describedby="emailHelp" name="title">
                         <div class="form-text text-danger"><span th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></span></div>
                     </div>
-<!--                    <div class="mb-3 form-check">-->
-<!--                        <input type="checkbox" class="form-check-input" id="exampleCheck1" name="isPublic" th:checked="${isPublic}">-->
-<!--                        <label class="form-check-label" for="exampleCheck1">Публичный проект (виден всем)</label>-->
-<!--                    </div>-->
                     <div class="mb-3">
-                        <label class="form-label" for="status_select">Доступность проекта</label>
-                        <select id="status_select" class="form-select" aria-label="Default select example" name="status">
-                            <option value="private">Приватный (виден Вам и выбранным Вами пользователям)</option>
-                            <option value="public">Публичный (виден всем)</option>
-                        </select>
+                        <label for="exampleFormControlTextarea1">Текст заметки</label>
+                        <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" name="body"></textarea>
+                        <div class="form-text text-danger"><span th:if="${#fields.hasErrors('body')}" th:errors="*{body}"></span></div>
                     </div>
                     <button type="submit" class="btn btn-primary">Создать</button>
                 </form>
