@@ -110,7 +110,7 @@
                            th:value="${_csrf.token}" />
                     <div class="mb-3">
                         <label for="titleInput" class="form-label">Название проекта</label>
-                        <input type="text" class="form-control" id="titleInput" aria-describedby="emailHelp" name="title">
+                        <input type="text" class="form-control" id="titleInput" aria-describedby="emailHelp" name="title" th:field="*{title}">
                         <div class="form-text text-danger"><span th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></span></div>
                     </div>
 <!--                    <div class="mb-3 form-check">-->

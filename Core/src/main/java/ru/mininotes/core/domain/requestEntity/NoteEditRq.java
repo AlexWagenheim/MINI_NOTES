@@ -3,7 +3,7 @@ package ru.mininotes.core.domain.requestEntity;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
-public class NoteRq {
+public class NoteEditRq {
 
     @NotNull
     @NotEmpty(message = "Название не может быть пустым")
@@ -28,5 +28,4 @@ public class NoteRq {
     public void setContent(String content) {
         this.content = content;
     }
-
 }

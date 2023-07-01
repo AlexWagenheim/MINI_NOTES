@@ -79,6 +79,51 @@ public class Project {
         this.lastUpdateDateTime = new Date();
     }
 
+    public boolean canEdit(User user) {
+        return this.owner.equals(user) || this.getEditorGroup().contains(user) || user.getRole().equals(UserRole.ROLE_ADMIN);
+    }
+
+    public boolean canDelete(User user) {
+        return this.owner.equals(user) || user.getRole().equals(UserRole.ROLE_ADMIN);
+    }
+
+    public boolean canView(User user) {
+        return this.isPublic ||
+                this.owner.equals(user) ||
+                this.getEditorGroup().contains(user) ||
+                this.getModeratorGroup().contains(user) ||
+                this.getSpectatorGroup().contains(user) ||
+                user.getRole().equals(UserRole.ROLE_ADMIN);
+    }
+
+    public boolean canCreateNote(User user) {
+        return this.owner.equals(user) ||
+                this.getEditorGroup().contains(user) ||
+                user.getRole().equals(UserRole.ROLE_ADMIN);
+    }
+
+    public boolean canEditNote(User user) {
+        return this.owner.equals(user) ||
+                this.getEditorGroup().contains(user) ||
+                this.getModeratorGroup().contains(user) ||
+                user.getRole().equals(UserRole.ROLE_ADMIN);
+    }
+
+    public boolean canDeleteNote(User user) {
+        return this.owner.equals(user) ||
+                this.getEditorGroup().contains(user) ||
+                user.getRole().equals(UserRole.ROLE_ADMIN);
+    }
+
+    public boolean canViewNote(User user) {
+        return this.isPublic ||
+                this.owner.equals(user) ||
+                this.getEditorGroup().contains(user) ||
+                this.getModeratorGroup().contains(user) ||
+                this.getSpectatorGroup().contains(user) ||
+                user.getRole().equals(UserRole.ROLE_ADMIN);
+    }
+
     public Project(String title, Date createdDateTime, boolean isPublic) {
         this.title = title;
         this.createdDateTime = createdDateTime;

@@ -9,13 +9,18 @@
     <link rel="stylesheet" th:href="@{/node_modules/bootstrap/dist/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/styles/sidebar.css}">
     <link rel="stylesheet" th:href="@{/styles/style.css}">
+
+    <link th:rel="stylesheet" th:href="@{/node_modules/font-awesome/css/font-awesome.css} "/>
+    <link th:rel="stylesheet" th:href="@{/node_modules/simplemde/dist/simplemde.min.css}"/>
+
+
     <script th:src="@{/node_modules/jquery/dist/jquery.min.js}"></script>
     <script th:src="@{/node_modules/@popperjs/core/dist/umd/popper.min.js}"></script>
     <script th:src="@{/node_modules/bootstrap/dist/js/bootstrap.min.js}"></script>
+
     <!--    <script th:src="@{/js/sidebar.js}"></script>-->
     <!--    <script th:src="@{/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js}"></script>-->
 </head>
-
 <header class="d-flex flex-wrap justify-content-center py-3 border-bottom pb-3 pt-3 ps-3 pe-3" sec:authorize="isAuthenticated()">
     <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
         <img th:src="@{/images/iconmonstr-note-primary-15-32.png}">
@@ -108,22 +113,32 @@
                     <input type="hidden"
                            th:name="${_csrf.parameterName}"
                            th:value="${_csrf.token}" />
-                    <div class="mb-3">
-                        <label for="titleInput" class="form-label">Заголовок</label>
-                        <input type="text" class="form-control" id="titleInput" aria-describedby="emailHelp" name="title">
+                    <div class="form-group">
+                        <label for="title">Заголовок:</label>
+                        <input type="text" id="title" placeholder="Заголовок" autocomplete="off" class="form-control"
+                               th:field="*{title}"/>
                         <div class="form-text text-danger"><span th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></span></div>
                     </div>
-                    <div class="mb-3">
-                        <label for="exampleFormControlTextarea1">Текст заметки</label>
-                        <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" name="body"></textarea>
-                        <div class="form-text text-danger"><span th:if="${#fields.hasErrors('body')}" th:errors="*{body}"></span></div>
+
+                    <div class="form-group">
+                        <label for="content">Текст заметки:</label>
+                        <textarea type="text" rows="4" id="content" placeholder="Текст заметки" class="form-control"
+                                  th:field="*{content}" autocomplete="off"></textarea>
+                        <div class="form-text text-danger"><span th:if="${#fields.hasErrors('content')}" th:errors="*{content}"></span></div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Создать</button>
+
+                    <button class="btn btn-primary" type="submit">Создать заметку</button>
+
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<script th:src="@{/node_modules/simplemde/dist/simplemde.min.js}"></script>
+<script>
+    var simplemde = new SimpleMDE({element: document.getElementById("content")});
+</script>
 
 </body>
 

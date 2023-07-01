@@ -23,8 +23,14 @@ public class Note {
     @NotEmpty
     @NotNull
     @Column(columnDefinition="TEXT")
-    /** Основной текст */
-    private String body;
+    /** Основной текст в формате markdown */
+    private String content;
+
+    @NotEmpty
+    @NotNull
+    @Column(columnDefinition="TEXT")
+    /** Основной текст в формате html */
+    private String html;
 
     @NotNull
     /** Дата и время создания */
@@ -44,6 +50,18 @@ public class Note {
     public Note() {
     }
 
+    public boolean canEdit(Project project, User user) {
+        return this.status.equals(NoteStatus.ACTIVE) && this.project.equals(project) && this.project.canEditNote(user);
+    }
+
+    public boolean canDelete(Project project, User user) {
+        return this.status.equals(NoteStatus.ACTIVE) && this.project.equals(project) && this.project.canDeleteNote(user);
+    }
+
+    public boolean canView(Project project, User user) {
+        return this.status.equals(NoteStatus.ACTIVE) && this.project.equals(project) && this.project.canViewNote(user);
+    }
+
     public long getId() {
         return id;
     }
@@ -60,12 +78,12 @@ public class Note {
         this.title = title;
     }
 
-    public String getBody() {
-        return body;
+    public String getContent() {
+        return content;
     }
 
-    public void setBody(String body) {
-        this.body = body;
+    public void setContent(String content) {
+        this.content = content;
     }
 
     public Date getCreatedDateTime() {
@@ -98,5 +116,13 @@ public class Note {
 
     public void setProject(Project project) {
         this.project = project;
+    }
+
+    public String getHtml() {
+        return html;
+    }
+
+    public void setHtml(String html) {
+        this.html = html;
     }
 }
