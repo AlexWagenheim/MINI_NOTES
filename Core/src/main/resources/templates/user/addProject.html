@@ -50,56 +50,8 @@
 <body>
 <div class="container-fluid" style="min-height: 800px;">
     <div class="row flex-nowrap">
-        <div class="flex-shrink-0 p-3 bg-white" style="width: 300px;">
-            <span class="d-flex align-items-center pb-3 mb-3 link-dark text-decoration-none border-bottom">
-<!--                <svg class="bi me-2" width="30" height="24"><use xlink:href="#bootstrap"/></svg>-->
-                <span class="fs-5 fw-semibold">Проекты</span>
-                <span style="margin-left: 125px;"><a class="link-underline-light" th:href="@{/{username}/project/add(username=${user.username})}"><img th:src="@{/images/iconmonstr-folder-24-32.png}"></a></span>
-            </span>
-            <ul class="list-unstyled ps-0">
-                <li class="empty_list text-primary" th:if="${#lists.isEmpty(user.projectSet)}">
-                    Список проектов пуст
-                </li>
-                <li class="mb-1" th:each="folder: ${user.projectSet}">
-                    <button class="btn btn-toggle align-items-center rounded collapsed"
-                            data-bs-toggle="collapse" th:data-bs-target="${'#Project-' + folder.title + '-' + folder.id + '-collapse'}" aria-expanded="false">
-                        <span th:text="${#strings.abbreviate(folder.title, 17)}"></span>
-                        <img class="ms-1" th:if="${folder.isPublic}" th:src="@{/images/iconmonstr-eye-lined-24.png}"
-                             data-bs-toggle="tooltip" data-bs-placement="top" title="Проект виден всем">
-                        <img class="ms-1" th:if="${!folder.isPublic}" th:src="@{/images/iconmonstr-eye-off-lined-24.png}"
-                             data-bs-toggle="tooltip" data-bs-placement="top" title="Приватный проект">
-                        <a th:href="@{/{username}/project/{projectId}/note/add(username=${user.username}, projectId = ${folder.id})}" class="ms-3 mini_button"><img th:src="@{/images/iconmonstr-note-add-24.png}"></a>
-                        <a th:href="@{/{username}/project/{projectId}/settings(username=${user.username}, projectId = ${folder.id})}" class="ms-1 mini_button"><img th:src="@{/images/iconmonstr-wrench-23-24.png}"></a>
-                    </button>
-                    <div class="collapse" th:id="${'Project-' + folder.title + '-' + folder.id + '-collapse'}">
-                        <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-                            <li class="empty_list text-primary" style="padding-left: 30px;" th:if="${#lists.isEmpty(folder.noteSet)}">
-                                Нет заметок
-                            </li>
-                            <li th:each="miniNote: ${folder.noteSet}">
-                                <a th:href="@{/{username}/project/{projectId}/note/{noteId}(username=${user.username}, projectId = ${folder.id}, noteId=${miniNote.id})}"
-                                   class="link-dark rounded" th:text="${#strings.abbreviate(miniNote.title, 17)}"></a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
 
-                <li class="border-top my-3"></li>
-                <li class="mb-1">
-                    <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#help-collapse" aria-expanded="false">
-                        Справка
-                    </button>
-                    <div class="collapse" id="help-collapse">
-                        <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-                            <li><a href="#" class="link-dark rounded">Создание проекта</a></li>
-                            <li><a href="#" class="link-dark rounded">Роли в проекте</a></li>
-                            <li><a href="#" class="link-dark rounded">Создание заметки</a></li>
-                            <li><a href="#" class="link-dark rounded">Редактирование заметки</a></li>
-                        </ul>
-                    </div>
-                </li>
-            </ul>
-        </div>
+        <div class="flex-shrink-0 p-3 bg-white" style="width: 300px;" th:insert="~{/components/sidebar :: copy}"></div>
 
         <div class="col py-3">
             <div style="width: 700px;">

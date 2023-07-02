@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * класс <b>Пользователь</b>
@@ -66,17 +67,26 @@ public class User implements UserDetails {
     public void addProject(Project project) {
         projectSet.add(project);
         project.setOwner(this);
-        project.getEditorGroup().add(this);
-        project.getModeratorGroup().add(this);
-        project.getSpectatorGroup().add(this);
     }
 
     public void removeProject(Project project) {
         projectSet.remove(project);
-        project.getEditorGroup().remove(this);
-        project.getModeratorGroup().remove(this);
-        project.getSpectatorGroup().remove(this);
         project.setOwner(null);
+    }
+
+    public User getRelativeView(User user) {
+        User view = new User();
+
+        view.setId(this.id);
+        view.setRole(this.role);
+        view.setEmail(this.email);
+        view.setUsername(this.username);
+        view.setPassword(this.password);
+        view.setStatus(this.status);
+        view.setProjectSet(this.projectSet.stream().filter(project -> project.canView(user)).collect(Collectors.toSet()));
+        view.setProjectSet(view.getProjectSet().stream().map(project -> project.getRelativeView(user)).collect(Collectors.toSet()));
+
+        return view;
     }
 
     @Override

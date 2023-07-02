@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * класс <b>Проект</b>
@@ -129,6 +130,23 @@ public class Project {
         this.createdDateTime = createdDateTime;
         this.lastUpdateDateTime = createdDateTime;
         this.isPublic = isPublic;
+    }
+
+    public Project getRelativeView(User user) {
+        Project view = new Project();
+
+        view.setId(this.id);
+        view.setOwner(this.owner);
+        view.setTitle(this.title);
+        view.setPublic(this.isPublic);
+        view.setSpectatorGroup(this.getSpectatorGroup());
+        view.setModeratorGroup(this.getModeratorGroup());
+        view.setEditorGroup(this.getEditorGroup());
+        view.setCreatedDateTime(this.createdDateTime);
+        view.setLastUpdateDateTime(this.lastUpdateDateTime);
+        view.setNoteSet(this.noteSet.stream().filter(note -> note.canView(this, user)).collect(Collectors.toSet()));
+
+        return view;
     }
 
     public long getId() {

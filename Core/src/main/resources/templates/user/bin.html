@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <title>Корзина</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" th:href="@{/node_modules/bootstrap/dist/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/styles/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/styles/style.css}">
+    <script th:src="@{/node_modules/jquery/dist/jquery.min.js}"></script>
+    <script th:src="@{/node_modules/@popperjs/core/dist/umd/popper.min.js}"></script>
+    <script th:src="@{/node_modules/bootstrap/dist/js/bootstrap.min.js}"></script>
+</head>
+<body>
+<div class="container-fluid" style="min-height: 800px;">
+    <div class="row flex-nowrap">
+
+        <div class="flex-shrink-0 p-3 bg-white" style="width: 300px;" th:insert="~{/components/sidebar :: copy}"></div>
+
+        <div class="col py-3">
+            <h1>Удалённые заметки</h1>
+
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

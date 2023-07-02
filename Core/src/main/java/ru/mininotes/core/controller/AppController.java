@@ -53,12 +53,19 @@ public class AppController {
 
     @GetMapping(value = "/{username}")
     public String workspace(@PathVariable("username") String username, Principal principal, Model model) {
-        if (principal.getName().equals(username) || userRepository.getUserByUsername(principal.getName()).get().getRole().equals(UserRole.ROLE_ADMIN)) {
-            model.addAttribute("username", principal.getName());
-            model.addAttribute("user", userRepository.getUserByUsername(username).get());
-            return "user/workspace";
+//        if (principal.getName().equals(username) || userRepository.getUserByUsername(principal.getName()).get().getRole().equals(UserRole.ROLE_ADMIN)) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        Optional<User> loginUser = userRepository.getUserByUsername(principal.getName());
+        if (optionalUser.isPresent()) {
+            if (!optionalUser.get().getRelativeView(loginUser.get()).getProjectSet().isEmpty()) {
+                model.addAttribute("username", principal.getName());
+                model.addAttribute("user", optionalUser.get().getRelativeView(loginUser.get()));
+                return "user/workspace";
+            } else {
+                return "redirect:/";
+            }
         } else {
-            return "redirect:/";
+            return "redirect:/error";
         }
     }
 
@@ -108,11 +115,13 @@ public class AppController {
     @GetMapping(value = "/{username}/project/add")
     public String getAddProjectPage(@PathVariable("username") String username, Principal principal, Model model) {
         Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        Optional<User> loginUser = userRepository.getUserByUsername(principal.getName());
         if(!optionalUser.isPresent()) {
             return "redirect:/";
-        } else if(principal.getName().equals(username) || userRepository.getUserByUsername(principal.getName()).get().getRole().equals(UserRole.ROLE_ADMIN)) {
+        } else if(principal.getName().equals(username) || loginUser.get().getRole().equals(UserRole.ROLE_ADMIN)) {
             model.addAttribute("username", principal.getName());
-            model.addAttribute("user", optionalUser.get());
+            model.addAttribute("user", optionalUser.get().getRelativeView(loginUser.get()));
+            model.addAttribute("loginUser", loginUser.get());
             model.addAttribute("project", new ProjectRq());
             return "user/addProject";
         } else {
@@ -127,11 +136,13 @@ public class AppController {
                              Principal principal,
                              Model model) {
         Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        Optional<User> loginUser = userRepository.getUserByUsername(principal.getName());
         if(!optionalUser.isPresent()) {
             return "redirect:/error";
         } else if(principal.getName().equals(username) || userRepository.getUserByUsername(principal.getName()).get().getRole().equals(UserRole.ROLE_ADMIN)) {
             model.addAttribute("username", principal.getName());
-            model.addAttribute("user", optionalUser.get());
+            model.addAttribute("user", optionalUser.get().getRelativeView(loginUser.get()));
+            model.addAttribute("loginUser", loginUser.get());
             if(errors.hasErrors()) {
                 return "user/addProject";
             } else {
@@ -160,11 +171,14 @@ public class AppController {
                     User projectUser = optionalUser.get();
                     Project project = optionalProject.get();
                     model.addAttribute("username", principal.getName());
-                    model.addAttribute("user", projectUser);
+                    model.addAttribute("user", projectUser.getRelativeView(loginUser));
+                    model.addAttribute("loginUser", loginUser);
                     model.addAttribute("project", project);
                     ProjectEditRq projectEditRq = new ProjectEditRq();
                     projectEditRq.setTitle(project.getTitle());
                     model.addAttribute("editProject", projectEditRq);
+                    model.addAttribute("member", new ProjectAddMemberRq());
+                    model.addAttribute("memberStatus", new ProjectChangeMemberStatusRq());
                     return "user/editProject";
                 } else {
                     return "redirect:/error";
@@ -194,8 +208,11 @@ public class AppController {
                     User projectUser = optionalUser.get();
                     Project project = optionalProject.get();
                     model.addAttribute("username", principal.getName());
-                    model.addAttribute("user", projectUser);
+                    model.addAttribute("user", projectUser.getRelativeView(loginUser));
+                    model.addAttribute("loginUser", loginUser);
                     model.addAttribute("project", project);
+                    model.addAttribute("member", new ProjectAddMemberRq());
+                    model.addAttribute("memberStatus", new ProjectChangeMemberStatusRq());
                     if(errors.hasErrors()) {
                         return "user/editProject";
                     } else {
@@ -244,6 +261,198 @@ public class AppController {
         }
     }
 
+    @GetMapping(value = "/{username}/project/{projectId}/addMember")
+    public String getProjectSettingsPage(@PathVariable("username") String username,
+                                         @PathVariable("projectId") long projectId,
+                                         Model model) {
+        return String.format("redirect:/%s/project/%s/settings", username, projectId);
+    }
+
+    @PostMapping(value = "/{username}/project/{projectId}/addMember")
+    public String addMember(@PathVariable("username") String username,
+                              @PathVariable("projectId") long projectId,
+                              @ModelAttribute("member") @Valid ProjectAddMemberRq projectAddMemberRq,
+                              Errors errors,
+                              Principal principal,
+                              Model model) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        User loginUser = userRepository.getUserByUsername(principal.getName()).get();
+        if (optionalUser.isPresent()) {
+            Optional<Project> optionalProject = optionalUser.get().getProjectSet().stream()
+                    .filter(project -> project.getId() == projectId).findAny();
+            if (optionalProject.isPresent()) {
+                if (optionalProject.get().canEdit(loginUser)) {
+                    User projectUser = optionalUser.get();
+                    Project project = optionalProject.get();
+                    model.addAttribute("username", principal.getName());
+                    model.addAttribute("user", projectUser.getRelativeView(loginUser));
+                    model.addAttribute("loginUser", loginUser);
+                    model.addAttribute("project", project);
+                    ProjectEditRq projectEditRq = new ProjectEditRq();
+                    projectEditRq.setTitle(project.getTitle());
+                    model.addAttribute("editProject", projectEditRq);
+                    model.addAttribute("memberStatus", new ProjectChangeMemberStatusRq());
+                    if(errors.hasErrors()) {
+                        return "user/editProject";
+                    } else {
+                        Optional<User> addUser = userRepository.getUserByUsername(projectAddMemberRq.getUsername());
+                        if (addUser.isPresent()) {
+                            if (!project.getSpectatorGroup().contains(addUser.get()) && !addUser.get().equals(project.getOwner())) {
+                                project.getSpectatorGroup().add(addUser.get());
+                                project.setLastUpdateDateTime(new Date());
+                                projectRepository.save(project);
+                                return String.format("redirect:/%s/project/%s/settings", username, project.getId());
+                            } else {
+                                errors.rejectValue("username", "user.exist", "Пользователь уже добавлен");
+                                return "user/editProject";
+                            }
+                        } else {
+                            errors.rejectValue("username", "user.no.exist", "Пользователь не найден");
+                            return "user/editProject";
+                        }
+                    }
+                } else {
+                    return "redirect:/error";
+                }
+            } else {
+                return "redirect:/error";
+            }
+        } else {
+            return "redirect:/error";
+        }
+    }
+
+    @GetMapping(value = "/{username}/project/{projectId}/changeMemberStatus")
+    public String getProjectSettingsPage2(@PathVariable("username") String username,
+                                         @PathVariable("projectId") long projectId,
+                                         Model model) {
+        return String.format("redirect:/%s/project/%s/settings", username, projectId);
+    }
+
+    @PostMapping(value = "/{username}/project/{projectId}/changeMemberStatus")
+    public String changeMemberStatus(@PathVariable("username") String username,
+                            @PathVariable("projectId") long projectId,
+                            @ModelAttribute("member") @Valid ProjectChangeMemberStatusRq projectChangeMemberStatusRq,
+                            Errors errors,
+                            Principal principal,
+                            Model model) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        User loginUser = userRepository.getUserByUsername(principal.getName()).get();
+        if (optionalUser.isPresent()) {
+            Optional<Project> optionalProject = optionalUser.get().getProjectSet().stream()
+                    .filter(project -> project.getId() == projectId).findAny();
+            if (optionalProject.isPresent()) {
+                if (optionalProject.get().canEdit(loginUser)) {
+                    User projectUser = optionalUser.get();
+                    Project project = optionalProject.get();
+                    model.addAttribute("username", principal.getName());
+                    model.addAttribute("user", projectUser.getRelativeView(loginUser));
+                    model.addAttribute("loginUser", loginUser);
+                    model.addAttribute("project", project);
+                    ProjectEditRq projectEditRq = new ProjectEditRq();
+                    projectEditRq.setTitle(project.getTitle());
+                    model.addAttribute("editProject", projectEditRq);
+                    model.addAttribute("member", new ProjectAddMemberRq());
+
+                    if(errors.hasErrors()) {
+                        return "user/editProject";
+                    } else {
+                        Optional<User> optionalMember = userRepository.getUserByUsername(projectChangeMemberStatusRq.getUsername());
+                        if (optionalMember.isPresent() && !optionalMember.get().equals(project.getOwner())) {
+                            User member = optionalMember.get();
+                            if (projectChangeMemberStatusRq.getUserRole().equals("editor")) {
+                                project.getEditorGroup().add(member);
+                                project.getModeratorGroup().add(member);
+                                project.getSpectatorGroup().add(member);
+                            } else if (projectChangeMemberStatusRq.getUserRole().equals("moderator")) {
+                                project.getEditorGroup().remove(member);
+                                project.getModeratorGroup().add(member);
+                                project.getSpectatorGroup().add(member);
+                            } else if (projectChangeMemberStatusRq.getUserRole().equals("spectator")){
+                                project.getEditorGroup().remove(member);
+                                project.getModeratorGroup().remove(member);
+                                project.getSpectatorGroup().add(member);
+                            }
+                            project.setLastUpdateDateTime(new Date());
+                            projectRepository.save(project);
+                            return String.format("redirect:/%s/project/%s/settings", username, project.getId());
+                        } else {
+                            return "redirect:/error";
+                        }
+                    }
+                } else {
+                    return "redirect:/error";
+                }
+            } else {
+                return "redirect:/error";
+            }
+        } else {
+            return "redirect:/error";
+        }
+    }
+
+    @GetMapping(value = "/{username}/project/{projectId}/deleteMember/{memberName}")
+    public String getProjectSettingsPage(@PathVariable("username") String username,
+                                          @PathVariable("projectId") long projectId,
+                                          @PathVariable("memberName") String memberName,
+                                          Model model) {
+        return String.format("redirect:/%s/project/%s/settings", username, projectId);
+    }
+
+    @PostMapping(value = "/{username}/project/{projectId}/deleteMember/{memberName}")
+    public String excludeMember(@PathVariable("username") String username,
+                                     @PathVariable("projectId") long projectId,
+                                     @PathVariable("memberName") String memberName,
+                                     Principal principal,
+                                     Model model) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        User loginUser = userRepository.getUserByUsername(principal.getName()).get();
+        if (optionalUser.isPresent()) {
+            Optional<Project> optionalProject = optionalUser.get().getProjectSet().stream()
+                    .filter(project -> project.getId() == projectId).findAny();
+            if (optionalProject.isPresent()) {
+                if (optionalProject.get().canEdit(loginUser)) {
+                    User projectUser = optionalUser.get();
+                    Project project = optionalProject.get();
+                    model.addAttribute("username", principal.getName());
+                    model.addAttribute("user", projectUser.getRelativeView(loginUser));
+                    model.addAttribute("loginUser", loginUser);
+                    model.addAttribute("project", project);
+                    ProjectEditRq projectEditRq = new ProjectEditRq();
+                    projectEditRq.setTitle(project.getTitle());
+                    model.addAttribute("editProject", projectEditRq);
+                    model.addAttribute("member", new ProjectAddMemberRq());
+                    model.addAttribute("memberStatus", new ProjectChangeMemberStatusRq());
+
+                    if ((memberName != null) && (memberName.length() != 0)) {
+                        Optional<User> optionalMember = userRepository.getUserByUsername(memberName);
+
+                        if (optionalMember.isPresent() && !optionalMember.get().equals(project.getOwner())) {
+                            User member = optionalMember.get();
+                            project.getEditorGroup().remove(member);
+                            project.getModeratorGroup().remove(member);
+                            project.getSpectatorGroup().remove(member);
+                            project.setLastUpdateDateTime(new Date());
+                            projectRepository.save(project);
+
+                            return String.format("redirect:/%s/project/%s/settings", username, project.getId());
+                        } else {
+                            return "redirect:/error";
+                        }
+                    } else {
+                        return "redirect:/error";
+                    }
+                } else {
+                    return "redirect:/error";
+                }
+            } else {
+                return "redirect:/error";
+            }
+        } else {
+            return "redirect:/error";
+        }
+    }
+
     @GetMapping(value = "/{username}/project/{projectId}/note/add")
     public String getAddNotePage(@PathVariable("username") String username,
                                      @PathVariable("projectId") long projectId,
@@ -259,7 +468,8 @@ public class AppController {
                     User projectUser = optionalUser.get();
                     Project project = optionalProject.get();
                     model.addAttribute("username", principal.getName());
-                    model.addAttribute("user", projectUser);
+                    model.addAttribute("user", projectUser.getRelativeView(loginUser));
+                    model.addAttribute("loginUser", loginUser);
                     model.addAttribute("project", project);
                     model.addAttribute("note", new NoteRq());
                     return "user/addNote";
@@ -289,7 +499,8 @@ public class AppController {
             if (optionalProject.isPresent()) {
                 if(optionalProject.get().canCreateNote(loginUser)) {
                     model.addAttribute("username", principal.getName());
-                    model.addAttribute("user", optionalUser.get());
+                    model.addAttribute("user", optionalUser.get().getRelativeView(loginUser));
+                    model.addAttribute("loginUser", loginUser);
                     model.addAttribute("project", optionalProject.get());
                     if(errors.hasErrors()) {
                         return "user/addNote";
@@ -337,7 +548,8 @@ public class AppController {
                         User projectUser = optionalUser.get();
                         Project project = optionalProject.get();
                         model.addAttribute("username", principal.getName());
-                        model.addAttribute("user", projectUser);
+                        model.addAttribute("user", projectUser.getRelativeView(loginUser));
+                        model.addAttribute("loginUser", loginUser);
                         model.addAttribute("project", project);
                         model.addAttribute("note", optionalNote.get());
                         model.addAttribute("canEdit", optionalNote.get().canEdit(project, loginUser));
@@ -387,7 +599,8 @@ public class AppController {
                         Project project = optionalProject.get();
                         Note note = optionalNote.get();
                         model.addAttribute("username", principal.getName());
-                        model.addAttribute("user", projectUser);
+                        model.addAttribute("user", projectUser.getRelativeView(loginUser));
+                        model.addAttribute("loginUser", loginUser);
                         model.addAttribute("project", project);
                         model.addAttribute("note", note);
                         NoteEditRq noteEditRq = new NoteEditRq();
@@ -431,7 +644,8 @@ public class AppController {
                         User projectUser = optionalUser.get();
                         Project project = optionalProject.get();
                         model.addAttribute("username", principal.getName());
-                        model.addAttribute("user", projectUser);
+                        model.addAttribute("user", projectUser.getRelativeView(loginUser));
+                        model.addAttribute("loginUser", loginUser);
                         model.addAttribute("project", project);
                         model.addAttribute("note", optionalNote.get());
                         model.addAttribute("canDelete", optionalNote.get().canDelete(project, loginUser));
@@ -481,7 +695,8 @@ public class AppController {
                         User projectUser = optionalUser.get();
                         Project project = optionalProject.get();
                         model.addAttribute("username", principal.getName());
-                        model.addAttribute("user", projectUser);
+                        model.addAttribute("user", projectUser.getRelativeView(loginUser));
+                        model.addAttribute("loginUser", loginUser);
                         model.addAttribute("project", project);
                         model.addAttribute("note", optionalNote.get());
                         model.addAttribute("canDelete", optionalNote.get().canDelete(project, loginUser));
@@ -515,5 +730,17 @@ public class AppController {
 //            return "redirect:/";
 //        }
         return "redirect:/";
+    }
+
+    @GetMapping(value = "/{username}/bin")
+    public String getBin(Principal principal, Model model) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(principal.getName());
+        if (optionalUser.isPresent()) {
+            model.addAttribute("username", principal.getName());
+            model.addAttribute("user", optionalUser.get());
+            return "user/bin";
+        } else {
+            return "redirect:/";
+        }
     }
 }

@@ -51,56 +51,8 @@
 <body>
 <div class="container-fluid" style="min-height: 800px;">
     <div class="row flex-nowrap">
-        <div class="flex-shrink-0 p-3 bg-white" style="width: 300px;">
-            <span class="d-flex align-items-center pb-3 mb-3 link-dark text-decoration-none border-bottom">
-<!--                <svg class="bi me-2" width="30" height="24"><use xlink:href="#bootstrap"/></svg>-->
-                <span class="fs-5 fw-semibold">Проекты</span>
-                <span style="margin-left: 125px;"><a class="link-underline-light" th:href="@{/{username}/project/add(username=${user.username})}"><img th:src="@{/images/iconmonstr-folder-24-32.png}"></a></span>
-            </span>
-            <ul class="list-unstyled ps-0">
-                <li class="empty_list text-primary" th:if="${#lists.isEmpty(user.projectSet)}">
-                    Список проектов пуст
-                </li>
-                <li class="mb-1" th:each="folder: ${user.projectSet}">
-                    <button class="btn btn-toggle align-items-center rounded collapsed"
-                            data-bs-toggle="collapse" th:data-bs-target="${'#Project-' + folder.title + '-' + folder.id + '-collapse'}" aria-expanded="false">
-                        <span th:text="${#strings.abbreviate(folder.title, 17)}"></span>
-                        <img class="ms-1" th:if="${folder.isPublic}" th:src="@{/images/iconmonstr-eye-lined-24.png}"
-                             data-bs-toggle="tooltip" data-bs-placement="top" title="Проект виден всем">
-                        <img class="ms-1" th:if="${!folder.isPublic}" th:src="@{/images/iconmonstr-eye-off-lined-24.png}"
-                             data-bs-toggle="tooltip" data-bs-placement="top" title="Приватный проект">
-                        <a th:href="@{/{username}/project/{projectId}/note/add(username=${user.username}, projectId = ${folder.id})}" class="ms-3 mini_button"><img th:src="@{/images/iconmonstr-note-add-24.png}"></a>
-                        <a th:href="@{/{username}/project/{projectId}/settings(username=${user.username}, projectId = ${folder.id})}" class="ms-1 mini_button"><img th:src="@{/images/iconmonstr-wrench-23-24.png}"></a>
-                    </button>
-                    <div class="collapse" th:id="${'Project-' + folder.title + '-' + folder.id + '-collapse'}">
-                        <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-                            <li class="empty_list text-primary" style="padding-left: 30px;" th:if="${#lists.isEmpty(folder.noteSet)}">
-                                Нет заметок
-                            </li>
-                            <li th:each="miniNote: ${folder.noteSet}">
-                                <a th:href="@{/{username}/project/{projectId}/note/{noteId}(username=${user.username}, projectId = ${folder.id}, noteId=${miniNote.id})}"
-                                   class="link-dark rounded" th:text="${#strings.abbreviate(miniNote.title, 17)}"></a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
 
-                <li class="border-top my-3"></li>
-                <li class="mb-1">
-                    <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#help-collapse" aria-expanded="false">
-                        Справка
-                    </button>
-                    <div class="collapse" id="help-collapse">
-                        <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-                            <li><a href="#" class="link-dark rounded">Создание проекта</a></li>
-                            <li><a href="#" class="link-dark rounded">Роли в проекте</a></li>
-                            <li><a href="#" class="link-dark rounded">Создание заметки</a></li>
-                            <li><a href="#" class="link-dark rounded">Редактирование заметки</a></li>
-                        </ul>
-                    </div>
-                </li>
-            </ul>
-        </div>
+        <div class="flex-shrink-0 p-3 bg-white" style="width: 300px;" th:insert="~{/components/sidebar :: copy}"></div>
 
         <div class="col py-3">
             <div style="width: 700px;">
@@ -127,6 +79,63 @@
                     </div>
                     <button type="submit" class="btn btn-primary">Сохранить</button>
                 </form>
+
+                <div class="mt-5">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="fs-2">Участники проекта</span>
+                        <form th:action="@{/{username}/project/{projectId}/addMember(username=${user.username}, projectId=${project.id})}" method="post" th:object="${member}">
+                            <div class="d-flex justify-content-between pt-2">
+                                <div class="form-group mx-sm-3" style="width: 250px">
+                                    <input type="hidden"
+                                           th:name="${_csrf.parameterName}"
+                                           th:value="${_csrf.token}" />
+                                    <input type="text" class="form-control" id="userSearch" placeholder="Имя пользователя" th:field="*{username}">
+                                    <div class="form-text text-danger"><span th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></span></div>
+                                </div>
+                                <button type="submit" class="btn btn-primary" style="height: 42px;">Добавить</button>
+                            </div>
+                        </form>
+                    </div>
+                    <ul class="list-group">
+                        <li class="empty_list text-primary d-flex justify-content-center" th:if="${#lists.isEmpty(project.spectatorGroup)}">
+                            <span>Список участников пуст</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between" th:each="member: ${project.spectatorGroup}">
+                            <a href="#" class="text-decoration-none text-black" role="button" th:text="${#strings.abbreviate(member.username, 30)}"></a>
+                            <div class="d-flex justify-content-end">
+                                <form th:action="@{/{username}/project/{projectId}/changeMemberStatus(username=${user.username}, projectId=${project.id})}"
+                                      method="post" th:object="${memberStatus}" th:id="${'change-status-request-form-' + member.username}">
+                                    <input type="hidden"
+                                           th:name="${_csrf.parameterName}"
+                                           th:value="${_csrf.token}" />
+                                    <input type="hidden"
+                                           name="username"
+                                           th:value="${member.username}" />
+                                    <select class="form-select form-select-sm me-2" style="width: 150px;" aria-label="Default select example" name="userRole"
+                                            th:onchange="document.getElementById('change-status-request-form-' + [[${member.username}]]).submit();">
+                                        <option value="spectator"
+                                                th:selected="${!#lists.contains(project.editorGroup, member) &&
+                                        !#lists.contains(project.moderatorGroup, member) &&
+                                        #lists.contains(project.spectatorGroup, member)}">Наблюдатель</option>
+                                        <option value="moderator"
+                                                th:selected="${!#lists.contains(project.editorGroup, member) &&
+                                        #lists.contains(project.moderatorGroup, member)}">Модератор</option>
+                                        <option value="editor" th:selected="${#lists.contains(project.editorGroup, member)}">Редактор</option>
+                                    </select>
+                                </form>
+                                <form th:action="@{/{username}/project/{projectId}/deleteMember/{memberName}
+                                (username=${user.username}, projectId=${project.id}, memberName=${member.username})}"
+                                      method="post" th:id="${'delete-member-request-form-' + member.username}">
+                                    <input type="hidden"
+                                           th:name="${_csrf.parameterName}"
+                                           th:value="${_csrf.token}" />
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Исключить</button>
+                                </form>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
             </div>
         </div>
         <div class="col py-5">
