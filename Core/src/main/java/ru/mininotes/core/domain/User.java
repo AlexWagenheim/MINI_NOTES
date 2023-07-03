@@ -4,6 +4,10 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+//import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
+//import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,6 +21,7 @@ import java.util.stream.Collectors;
 /**
  * класс <b>Пользователь</b>
  */
+@Indexed
 @Entity
 @Table(name = "Person")
 public class User implements UserDetails {
@@ -27,6 +32,7 @@ public class User implements UserDetails {
 
     @NotNull
     @NotEmpty
+    @FullTextField()
     /** Имя пользователя */
     private String username;
 
@@ -52,6 +58,10 @@ public class User implements UserDetails {
      * */
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     Set<Project> projectSet = new HashSet<>();
+
+    /** список удалённых заметок {@link Note} пользователя */
+    @OneToMany()
+    Set<Note> deletedNoteSet = new HashSet<>();
 
     public User() {
     }
@@ -171,4 +181,13 @@ public class User implements UserDetails {
     public void setRole(UserRole role) {
         this.role = role;
     }
+
+    public Set<Note> getDeletedNoteSet() {
+        return deletedNoteSet;
+    }
+
+    public void setDeletedNoteSet(Set<Note> deletedNoteSet) {
+        this.deletedNoteSet = deletedNoteSet;
+    }
+
 }

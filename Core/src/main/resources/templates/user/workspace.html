@@ -16,38 +16,8 @@
 <!--    <script th:src="@{/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js}"></script>-->
 </head>
 
-<header class="d-flex flex-wrap justify-content-center py-3 border-bottom pb-3 pt-3 ps-3 pe-3" sec:authorize="isAuthenticated()">
-    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
-        <img th:src="@{/images/iconmonstr-note-primary-15-32.png}">
-        <span class="fs-3 text-primary fw-bold ms-2">MINI NOTES</span>
-    </a>
+<header th:insert="~{/components/topbar :: copy}"></header>
 
-    <form th:action="@{/logout}" method="post" id="logout_form">
-        <input type="hidden" name="var" value="val">
-    </form>
-
-    <span class="fs-5 text-primary fw-bold ms-2 me-2 mt-1" th:text="${username}"></span>
-
-    <div class="dropdown text-end mt-1">
-
-        <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-            <img th:src="@{/images/iconmonstr-user-circle-thin-32.png}" alt="mdo" width="32" height="32" class="rounded-circle">
-        </a>
-        <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1">
-            <!--            <li><a class="dropdown-item" href="#">New project...</a></li>-->
-            <!--            <li><a class="dropdown-item" href="#">Настройки</a></li>-->
-            <li><a class="dropdown-item" href="#" >Профиль</a></li>
-            <li><a class="dropdown-item" th:href="@{/{username}/bin(username=${username})}">Корзина</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#" th:onclick="document.getElementById('logout_form').submit();">Выйти</a></li>
-        </ul>
-
-    </div>
-
-</header>
-<script>
-
-</script>
 <body>
     <div class="container-fluid" style="min-height: 800px;">
         <div class="row flex-nowrap">

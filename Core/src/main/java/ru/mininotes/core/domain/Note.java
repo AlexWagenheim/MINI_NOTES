@@ -125,4 +125,5 @@ public class Note {
     public void setHtml(String html) {
         this.html = html;
     }
+
 }

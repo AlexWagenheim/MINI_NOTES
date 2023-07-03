@@ -13,18 +13,50 @@
     <script th:src="@{/node_modules/@popperjs/core/dist/umd/popper.min.js}"></script>
     <script th:src="@{/node_modules/bootstrap/dist/js/bootstrap.min.js}"></script>
 </head>
+
+<header th:insert="~{/components/topbar :: copy}"></header>
+
 <body>
-<div class="container-fluid" style="min-height: 800px;">
-    <div class="row flex-nowrap">
+    <div class="container-fluid" style="min-height: 800px;">
+        <div class="row flex-nowrap">
 
-        <div class="flex-shrink-0 p-3 bg-white" style="width: 300px;" th:insert="~{/components/sidebar :: copy}"></div>
+            <div class="flex-shrink-0 p-3 bg-white" style="width: 300px;" th:insert="~{/components/sidebar :: copy}"></div>
 
-        <div class="col py-3">
-            <h1>Удалённые заметки</h1>
+            <div class="col py-3">
+                <div style="width: 700px;">
+                    <h1>Удалённые заметки</h1>
+
+                    <ul class="list-group">
+                        <li class="empty_list text-primary d-flex justify-content-center" th:if="${#lists.isEmpty(user.deletedNoteSet)}">
+                            <span>Корзина пуста</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between" th:each="note: ${user.deletedNoteSet}">
+                            <span th:text="${#strings.abbreviate(note.title, 30)}"></span>
+                            <div class="d-flex justify-content-end">
+                                <form th:action="@{/{username}/bin/note/{noteId}/recover
+                                (username=${user.username}, noteId=${note.id})}"
+                                      method="post" th:id="${'recover-note-request-form-' + note.title}" class="me-2">
+                                    <input type="hidden"
+                                           th:name="${_csrf.parameterName}"
+                                           th:value="${_csrf.token}" />
+                                    <button type="submit" class="btn btn-outline-primary btn-sm">Восстановить</button>
+                                </form>
+                                <form th:action="@{/{username}/bin/note/{noteId}/delete
+                                (username=${user.username}, noteId=${note.id})}"
+                                      method="post" th:id="${'delete-note-request-form-' + note.title}">
+                                    <input type="hidden"
+                                           th:name="${_csrf.parameterName}"
+                                           th:value="${_csrf.token}" />
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Удалить</button>
+                                </form>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
 
         </div>
-
     </div>
-</div>
 </body>
 </html>

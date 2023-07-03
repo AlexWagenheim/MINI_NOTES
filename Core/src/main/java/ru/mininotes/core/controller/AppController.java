@@ -1,18 +1,19 @@
 package ru.mininotes.core.controller;
 
 import jakarta.validation.Valid;
+import org.apache.logging.log4j.util.PropertySource;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
 import ru.mininotes.core.domain.*;
 import ru.mininotes.core.domain.requestEntity.*;
 import ru.mininotes.core.repository.NoteRepository;
@@ -22,7 +23,9 @@ import ru.mininotes.core.repository.UserRepository;
 
 import java.security.Principal;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Controller
 public class AppController {
@@ -57,12 +60,14 @@ public class AppController {
         Optional<User> optionalUser = userRepository.getUserByUsername(username);
         Optional<User> loginUser = userRepository.getUserByUsername(principal.getName());
         if (optionalUser.isPresent()) {
-            if (!optionalUser.get().getRelativeView(loginUser.get()).getProjectSet().isEmpty()) {
+            if (!optionalUser.get().getRelativeView(loginUser.get()).getProjectSet().isEmpty() ||
+                    optionalUser.get().getUsername().equals(loginUser.get().getUsername())) {
                 model.addAttribute("username", principal.getName());
                 model.addAttribute("user", optionalUser.get().getRelativeView(loginUser.get()));
+                model.addAttribute("loginUser", loginUser.get());
                 return "user/workspace";
             } else {
-                return "redirect:/";
+                return "redirect:/profile/" + username;
             }
         } else {
             return "redirect:/error";
@@ -93,14 +98,21 @@ public class AppController {
         if (errors.hasErrors()) {
             return "signup";
         }
-        if (!signUpRq.getPassword().equals(signUpRq.getPasswordConfirm())){
-            model.addAttribute("passwordError", "Пароли не совпадают");
-            return "signup";
-        }
         if (userRepository.getUserByUsername(signUpRq.getUsername()).isPresent()){
             model.addAttribute("usernameError", "Пользователь с таким именем уже существует");
             return "signup";
         }
+        if (userRepository.getUserByEmail(signUpRq.getEmail()).isPresent()){
+            errors.rejectValue("email", "email.exist", "Пользователь с таким e-mail уже существует");
+            return "signup";
+        }
+        if (!signUpRq.getPassword().equals(signUpRq.getPasswordConfirm())){
+            errors.rejectValue("password", "password.no.match", "пароли не совпадают");
+            errors.rejectValue("passwordConfirm", "passwordConfirm.no.match", "пароли не совпадают");
+//            model.addAttribute("passwordError", "Пароли не совпадают");
+            return "signup";
+        }
+
         userRepository.save(new User(
                 signUpRq.getUsername(),
                 signUpRq.getEmail(),
@@ -248,6 +260,8 @@ public class AppController {
                     User projectUser = optionalUser.get();
                     Project project = optionalProject.get();
                     projectUser.removeProject(project);
+                    projectUser.setDeletedNoteSet(projectUser.getDeletedNoteSet().stream().
+                            filter(note -> project.getNoteSet().contains(note)).collect(Collectors.toSet()));
                     userRepository.save(projectUser);
                     return "redirect:/" + username;
                 } else {
@@ -704,6 +718,8 @@ public class AppController {
                         Note note = optionalNote.get();
                         note.setStatus(NoteStatus.DELETED);
                         note.setLastUpdateDateTime(new Date());
+                        note.getProject().getOwner().getDeletedNoteSet().add(note);
+                        userRepository.save(note.getProject().getOwner());
                         noteRepository.save(note);
 
                         return "redirect:/" + username;
@@ -721,26 +737,248 @@ public class AppController {
         }
     }
 
-    @GetMapping(value = "/user/{username}")
-    public String getProfile(Principal principal, Model model) {
+//    @GetMapping(value = "/user/{username}")
+//    public String getProfile(Principal principal, Model model) {
 //        if (principal == null) {
 //            model.addAttribute("user", new SignUpRq());
 //            return "signup";
 //        } else {
 //            return "redirect:/";
 //        }
-        return "redirect:/";
-    }
+//        return "redirect:/";
+//    }
 
     @GetMapping(value = "/{username}/bin")
-    public String getBin(Principal principal, Model model) {
-        Optional<User> optionalUser = userRepository.getUserByUsername(principal.getName());
-        if (optionalUser.isPresent()) {
+    public String getBin(@PathVariable("username") String username, Principal principal, Model model) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        User loginUser = userRepository.getUserByUsername(principal.getName()).get();
+        if (optionalUser.isPresent() && principal.getName().equals(username)) {
             model.addAttribute("username", principal.getName());
             model.addAttribute("user", optionalUser.get());
+            model.addAttribute("loginUser", loginUser);
             return "user/bin";
         } else {
             return "redirect:/";
         }
     }
+
+    @PostMapping(value = "/{username}/bin/note/{noteId}/recover")
+    public String recoverNoteFromBin(@PathVariable("username") String username,
+                         @PathVariable("noteId") long noteId,
+                         Principal principal,
+                         Model model) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        User loginUser = userRepository.getUserByUsername(principal.getName()).get();
+        if (optionalUser.isPresent() && principal.getName().equals(username)) {
+            Optional<Note> optionalNote = noteRepository.findById(noteId);
+            if (optionalNote.isPresent()) {
+                User projectUser = optionalUser.get();
+                Note note = optionalNote.get();
+
+                projectUser.getDeletedNoteSet().remove(note);
+                note.setStatus(NoteStatus.ACTIVE);
+                userRepository.save(projectUser);
+                noteRepository.save(note);
+                model.addAttribute("username", principal.getName());
+                model.addAttribute("user", optionalUser.get());
+                model.addAttribute("loginUser", loginUser);
+
+                return String.format("redirect:/%s/bin", projectUser.getUsername());
+            } else {
+                return "redirect:/error";
+            }
+        } else {
+            return "redirect:/error";
+        }
+    }
+
+    @PostMapping(value = "/{username}/bin/note/{noteId}/delete")
+    public String deleteNoteFromBin(@PathVariable("username") String username,
+                         @PathVariable("noteId") long noteId,
+                         Principal principal,
+                         Model model) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        if (optionalUser.isPresent() && principal.getName().equals(username)) {
+            Optional<Note> optionalNote = noteRepository.findById(noteId);
+            if (optionalNote.isPresent()) {
+                User projectUser = optionalUser.get();
+                Note note = optionalNote.get();
+
+                projectUser.getDeletedNoteSet().remove(note);
+                userRepository.save(projectUser);
+                Project project = note.getProject();
+                project.removeNote(note);
+                projectRepository.save(project);
+                model.addAttribute("username", principal.getName());
+                model.addAttribute("user", optionalUser.get());
+
+                return String.format("redirect:/%s/bin", optionalUser.get().getUsername());
+            } else {
+                return "redirect:/error";
+            }
+        } else {
+            return "redirect:/error";
+        }
+    }
+
+    @GetMapping(value = "/admin/userList")
+    public String getAdminUserListPage(@RequestParam(required = false, name = "page") Integer pageNumber,
+                                       @RequestParam(required = false, name = "size") Integer pageSize,
+                                       Principal principal,
+                                       Model model) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(principal.getName());
+
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+
+            if (pageNumber == null) {
+                pageNumber = 0;
+            }
+            if (pageSize == null) {
+                pageSize = 10;
+            }
+
+            if (user.getRole().equals(UserRole.ROLE_ADMIN)) {
+                model.addAttribute("username", principal.getName());
+                model.addAttribute("user", user);
+                model.addAttribute("loginUser", user);
+                if ((pageNumber < 0) || (pageSize < 1)) {
+                    pageNumber = 0;
+                    pageSize = 10;
+                }
+                Page<User> page = userRepository.findAll(PageRequest.of(pageNumber, pageSize));
+                if (!page.hasContent()) {
+                    pageNumber = 0;
+                    pageSize = 10;
+                    page = userRepository.findAll(PageRequest.of(pageNumber, pageSize));
+                }
+                model.addAttribute("hasPrevious", page.hasPrevious());
+                model.addAttribute("hasNext", page.hasNext());
+                model.addAttribute("currentPage", pageNumber);
+                model.addAttribute("size", pageSize);
+//                List<User> userList = page.toList().stream().
+//                        filter(item -> !item.getUsername().equals(user.getUsername())).collect(Collectors.toList());
+                List<User> userList = page.toList();
+
+//                userList.sort((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getUsername(), o2.getUsername()));
+
+                model.addAttribute("userList", userList);
+                return "admin/userList";
+            } else {
+                return "redirect:/error";
+            }
+        } else {
+            return "redirect:/error";
+        }
+    }
+
+    @GetMapping(value = "/admin/editUser/{username}")
+    public String getAdminEditUserPage(@PathVariable("username") String username,
+                                       Principal principal,
+                                       Model model) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        Optional<User> optionalLoginUser = userRepository.getUserByUsername(principal.getName());
+        if (optionalUser.isPresent() && optionalLoginUser.isPresent()) {
+            User user = optionalUser.get();
+            User loginUser = optionalLoginUser.get();
+
+            if (loginUser.getRole().equals(UserRole.ROLE_ADMIN) && (loginUser.getStatus() != UserStatus.BANNED)) {
+                model.addAttribute("username", principal.getName());
+                model.addAttribute("user", user);
+                model.addAttribute("loginUser", loginUser);
+                UserEditRq editUser = new UserEditRq();
+                editUser.setUsername(user.getUsername());
+                editUser.setEmail(user.getEmail());
+                editUser.setRole(user.getRole().toString());
+                editUser.setStatus(user.getStatus().toString());
+                model.addAttribute("editUser", editUser);
+                return "admin/editUser";
+            } else {
+                return "redirect:/error";
+            }
+        } else {
+            return "redirect:/error";
+        }
+    }
+
+    @PostMapping(value = "/admin/editUser/{username}")
+    public String editUser(@PathVariable("username") String username,
+                              @ModelAttribute("editUser") @Valid UserEditRq userEditRq,
+                              Errors errors,
+                              Principal principal,
+                              Model model) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        Optional<User> optionalLoginUser = userRepository.getUserByUsername(principal.getName());
+        if (optionalUser.isPresent() && optionalLoginUser.isPresent()) {
+            User user = optionalUser.get();
+            User loginUser = optionalLoginUser.get();
+            model.addAttribute("username", principal.getName());
+            model.addAttribute("user", user);
+            model.addAttribute("loginUser", loginUser);
+            if (loginUser.getRole().equals(UserRole.ROLE_ADMIN) && (loginUser.getStatus() != UserStatus.BANNED)) {
+                if(errors.hasErrors()) {
+                    return "admin/editUser";
+                } else {
+                    if (!userRepository.getUserByUsername(userEditRq.getUsername()).isPresent() ||
+                            userEditRq.getUsername().equals(user.getUsername())) {
+                        user.setUsername(userEditRq.getUsername());
+                        if (!userRepository.getUserByEmail(userEditRq.getEmail()).isPresent() ||
+                                userEditRq.getEmail().equals(user.getEmail())) {
+                            user.setEmail(userEditRq.getEmail());
+
+                            if (userEditRq.getStatus().equals("ACTIVE")) {
+                                user.setStatus(UserStatus.ACTIVE);
+                            } else if (userEditRq.getStatus().equals("NOT_CONFIRMED")) {
+                                user.setStatus(UserStatus.NOT_CONFIRMED);
+                            } else if (userEditRq.getStatus().equals("BANNED")) {
+                                user.setStatus(UserStatus.BANNED);
+                            }
+
+                            if (userEditRq.getRole().equals("user")) {
+                                user.setRole(UserRole.ROLE_USER);
+                            } else if (userEditRq.getRole().equals("admin")) {
+                                user.setRole(UserRole.ROLE_ADMIN);
+                            }
+
+                            userRepository.save(user);
+
+                            return "redirect:/admin/userList";
+                        } else {
+                            errors.rejectValue("email", "email.exist", "Пользователь с таким e-mail уже существует");
+                            return "admin/editUser";
+                        }
+                    } else {
+                        errors.rejectValue("username", "user.exist", "Пользователь с таким именем уже существует");
+                        return "admin/editUser";
+                    }
+                }
+            } else {
+                return "redirect:/error";
+            }
+        } else {
+            return "redirect:/error";
+        }
+    }
+
+    @PostMapping(value = "/admin/editUser/{username}/delete")
+    public String deleteUser(@PathVariable("username") String username,
+                           Principal principal,
+                           Model model) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        Optional<User> optionalLoginUser = userRepository.getUserByUsername(principal.getName());
+        if (optionalUser.isPresent() && optionalLoginUser.isPresent()) {
+            User user = optionalUser.get();
+            User loginUser = optionalLoginUser.get();
+            if (loginUser.getRole().equals(UserRole.ROLE_ADMIN) && (loginUser.getStatus() != UserStatus.BANNED)) {
+                userRepository.delete(user);
+
+                return "redirect:/admin/userList";
+            } else {
+                return "redirect:/error";
+            }
+        } else {
+            return "redirect:/error";
+        }
+    }
+
 }

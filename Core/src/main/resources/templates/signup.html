@@ -19,21 +19,26 @@
 <!--        <p th:if="${param.error}" class="text-danger">Неверная пара Логин/Пароль</p>-->
 <!--        <p th:if="${param.logout}" class="text-info">Вы успешно вышли из системы</p>-->
         <div class="form-floating">
-            <input type="email" class="form-control" id="floatingEmail" placeholder="name@example.com" name="email">
+            <input type="email" class="form-control" id="floatingEmail" placeholder="name@example.com" name="email" th:field="*{email}">
             <label for="floatingEmail">E-mail адрес</label>
         </div>
         <div class="form-floating">
-            <input type="text" class="form-control" id="floatingInput" placeholder="Логин" name="username">
+            <input type="text" class="form-control" id="floatingInput" placeholder="Логин" name="username" th:field="*{username}">
             <label for="floatingInput">Имя пользователя</label>
         </div>
         <div class="form-floating">
-            <input type="password" class="form-control" id="floatingPassword1" placeholder="Пароль" name="password">
+            <input type="password" class="form-control" id="floatingPassword1" placeholder="Пароль" name="password" th:field="*{password}">
             <label for="floatingPassword1">Пароль</label>
         </div>
         <div class="form-floating">
-            <input type="password" class="form-control" id="floatingRepeatPassword1" placeholder="Пароль" name="passwordConfirm">
+            <input type="password" class="form-control" id="floatingRepeatPassword1" placeholder="Пароль" name="passwordConfirm" th:field="*{passwordConfirm}">
             <label for="floatingRepeatPassword1">Повторите пароль</label>
         </div>
+
+        <div class="form-text text-danger"><span th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></span></div>
+        <div class="form-text text-danger"><span th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span></div>
+        <div class="form-text text-danger"><span th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span></div>
+<!--        <div class="form-text text-danger"><span th:if="${#fields.hasErrors('passwordConfirm')}" th:errors="*{passwordConfirm}"></span></div>-->
 
         <p>Уже есть аккаунт? <a th:href="@{/login}" class="link-underline-light">Войти</a></p>
 

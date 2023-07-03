@@ -25,11 +25,15 @@
                          data-bs-toggle="tooltip" data-bs-placement="top" title="Проект виден всем">
                     <img class="ms-1" th:if="${!folder.isPublic}" th:src="@{/images/iconmonstr-eye-off-lined-24.png}"
                          data-bs-toggle="tooltip" data-bs-placement="top" title="Приватный проект">
-                    <a th:if="${#lists.contains(folder.editorGroup, loginUser) || #strings.equals(folder.owner.username, username)}"
+                    <a th:if="${#lists.contains(folder.editorGroup, loginUser) ||
+                                #strings.equals(folder.owner.username, username) ||
+                                #strings.equals(loginUser.role, 'ROLE_ADMIN')}"
                        th:href="@{/{username}/project/{projectId}/note/add(username=${user.username}, projectId = ${folder.id})}"
                        class="ms-3 mini_button"><img th:src="@{/images/iconmonstr-note-add-24.png}">
                     </a>
-                    <a th:if="${#lists.contains(folder.editorGroup, loginUser) || #strings.equals(folder.owner.username, username)}"
+                    <a th:if="${#lists.contains(folder.editorGroup, loginUser) ||
+                                #strings.equals(folder.owner.username, username) ||
+                                #strings.equals(loginUser.role, 'ROLE_ADMIN')}"
                        th:href="@{/{username}/project/{projectId}/settings(username=${user.username}, projectId = ${folder.id})}"
                        class="ms-1 mini_button"><img th:src="@{/images/iconmonstr-wrench-23-24.png}">
                     </a>

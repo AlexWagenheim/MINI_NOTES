@@ -1,0 +1,1 @@
+insert into person (email, password, role, status, username, id) values ('admin@admin.ru', '$2a$12$FPU8s7qa0oj9ZWwOc6UjZuK9mRiFVdQ/7LvlP56hPcdc0GUT15qsK', 1, 0, 'admin', 0)

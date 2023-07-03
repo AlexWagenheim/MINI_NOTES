@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <title>Пользователь</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" th:href="@{/node_modules/bootstrap/dist/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/styles/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/styles/style.css}">
+    <script th:src="@{/node_modules/jquery/dist/jquery.min.js}"></script>
+    <script th:src="@{/node_modules/@popperjs/core/dist/umd/popper.min.js}"></script>
+    <script th:src="@{/node_modules/bootstrap/dist/js/bootstrap.min.js}"></script>
+</head>
+
+<header th:insert="~{/components/topbar :: copy}"></header>
+
+<body>
+    <div class="container-fluid" style="min-height: 800px;">
+        <div class="row flex-nowrap">
+
+            <div class="flex-shrink-0 p-3 bg-white" style="width: 300px;" th:insert="~{/components/sidebar :: copy}"></div>
+
+            <div class="col py-3">
+                <h1>Пользователи сервиса</h1>
+
+                <div style="max-width: 700px;">
+                    <ul class="list-group">
+                        <li class="empty_list text-primary d-flex justify-content-center" th:if="${#lists.isEmpty(userList)}">
+                            <span>Пользователей не найдено</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between" th:each="person: ${userList}">
+                            <span class="fs-5" th:text="${#strings.abbreviate(person.username, 30)}"></span>
+                            <div class="d-flex justify-content-end">
+                                <span class="mt-1 me-2 text-primary" th:if="${#strings.equals(person.role, 'ROLE_ADMIN')}">Администратор</span>
+                                <span class="mt-1 me-2" th:if="${#strings.equals(person.role, 'ROLE_USER')}">Пользователь</span>
+                                <a th:href="@{/admin/editUser/{username}(username=${person.username})}"
+                                   class="btn btn-outline-primary btn-sm" role="button">Редактировать</a>
+                            </div>
+                        </li>
+                    </ul>
+                    <div class="d-flex justify-content-between mt-3">
+                        <div>
+                            <a th:if="${hasPrevious}" th:href="@{/admin/userList?page={pageNumber}&size={size}(pageNumber=${currentPage - 1}, size=${size})}"
+                               class="btn btn-outline-primary btn-sm" role="button">Назад</a>
+                        </div>
+
+                        <span>Страница: <span th:text="${currentPage + 1}"></span></span>
+
+                        <div>
+                            <a th:if="${hasNext}" th:href="@{/admin/userList?page={pageNumber}&size={size}(pageNumber=${currentPage + 1}, size=${size})}"
+                               class="btn btn-outline-primary btn-sm" role="button">Далее</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
