@@ -80,6 +80,7 @@ public class User implements UserDetails {
     }
 
     public void removeProject(Project project) {
+        deletedNoteSet.removeAll(project.getNoteSet());
         projectSet.remove(project);
         project.setOwner(null);
     }

@@ -58,7 +58,11 @@
                 <button type="submit" class="btn btn-primary">Сохранить</button>
             </form>
             <div class="mt-5">
-                <button disabled type="submit" class="btn btn-outline-dark">Сбросить пароль</button>
+                <form th:action="@{/admin/editUser/{username}/resetPassword(username=${user.username})}" method="post">
+                    <input hidden type="email" class="form-control" aria-describedby="emailHelp" name="email"
+                           th:value="${user.email}">
+                    <button type="submit" class="btn btn-outline-dark">Сбросить пароль</button>
+                </form>
             </div>
         </div>
 

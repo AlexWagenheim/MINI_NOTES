@@ -14,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import ru.mininotes.core.domain.User;
+import ru.mininotes.core.domain.UserStatus;
 import ru.mininotes.core.repository.UserRepository;
 
 import javax.sql.DataSource;
@@ -32,7 +33,14 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests((requests) -> requests
-                        .requestMatchers("/styles/**", "/images/**", "/node_modules/**","/signup", "/").permitAll()
+                        .requestMatchers("/styles/**",
+                                "/images/**",
+                                "/node_modules/**",
+                                "/signup",
+                                "/pages/**",
+                                "/resetPassword",
+                                "/resetPassword/*",
+                                "/").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin((form) -> form
@@ -62,7 +70,11 @@ public class WebSecurityConfig {
         return username -> {
             Optional<User> user = userRepository.getUserByUsername(username);
             if (user.isPresent()) {
-                return user.get();
+                if (!user.get().getStatus().equals(UserStatus.BANNED)) {
+                    return user.get();
+                } else {
+                    throw new UsernameNotFoundException("Пользователь ‘" + username + "’ заблокирован");
+                }
             } else {
                 throw new UsernameNotFoundException("Пользователь ‘" + username + "’ не найден");
             }

@@ -10,8 +10,12 @@
     <div th:fragment="copy">
                 <span class="d-flex align-items-center pb-3 mb-3 link-dark text-decoration-none border-bottom">
     <!--                <svg class="bi me-2" width="30" height="24"><use xlink:href="#bootstrap"/></svg>-->
-                    <span class="fs-5 fw-semibold">Проекты</span>
-                    <span style="margin-left: 125px;"><a class="link-underline-light" th:href="@{/{username}/project/add(username=${user.username})}"><img th:src="@{/images/iconmonstr-folder-24-32.png}"></a></span>
+                    <span class="fs-5 fw-semibold"><a href="/" class="text-decoration-none text-black">Проекты</a></span>
+                    <span style="margin-left: 125px;" th:if="${#strings.equals(user.username, username) ||
+                                #strings.equals(loginUser.role, 'ROLE_ADMIN')}">
+                        <a class="link-underline-light" th:href="@{/{username}/project/add(username=${user.username})}">
+                            <img th:src="@{/images/iconmonstr-folder-24-32.png}"></a>
+                    </span>
                 </span>
         <ul class="list-unstyled ps-0" style="max-height: 600px; overflow-y: auto;">
             <li class="empty_list text-primary" th:if="${#lists.isEmpty(user.projectSet)}">

@@ -27,7 +27,8 @@
         <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1">
             <!--            <li><a class="dropdown-item" href="#">New project...</a></li>-->
             <!--            <li><a class="dropdown-item" href="#">Настройки</a></li>-->
-            <li><a class="dropdown-item" href="#" >Профиль</a></li>
+            <li><a class="dropdown-item" href="/" >Профиль</a></li>
+            <li><a th:if="${#strings.equals(role, 'ROLE_ADMIN')}" class="dropdown-item" href="/admin/userList" >Пользователи</a></li>
             <li><a class="dropdown-item" th:href="@{/{username}/bin(username=${username})}">Корзина</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="#" th:onclick="document.getElementById('logout_form').submit();">Выйти</a></li>
