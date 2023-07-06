@@ -1,7 +1,6 @@
 package ru.mininotes.core.controller;
 
 import jakarta.validation.Valid;
-import org.apache.logging.log4j.util.PropertySource;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
@@ -10,18 +9,28 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
+import ru.mininotes.core.domain.note.Note;
+import ru.mininotes.core.domain.note.NoteStatus;
+import ru.mininotes.core.domain.notification.Notification;
+import ru.mininotes.core.domain.project.ProjectAccessRequest;
+import ru.mininotes.core.domain.project.ProjectAccessRequestType;
+import ru.mininotes.core.domain.user.User;
+import ru.mininotes.core.domain.user.UserRole;
+import ru.mininotes.core.domain.user.UserStatus;
 import ru.mininotes.core.domain.*;
+import ru.mininotes.core.domain.project.Project;
 import ru.mininotes.core.domain.requestEntity.*;
 import ru.mininotes.core.repository.NoteRepository;
 import ru.mininotes.core.repository.ProjectRepository;
 import ru.mininotes.core.repository.ResetPasswordRepository;
 import ru.mininotes.core.repository.UserRepository;
+import ru.mininotes.core.service.NotificationService;
+import ru.mininotes.core.service.ProjectService;
 import ru.mininotes.core.service.UserService;
 
 
@@ -40,23 +49,28 @@ public class AppController {
     private NoteRepository noteRepository;
     private ResetPasswordRepository resetPasswordRepository;
     private PasswordEncoder passwordEncoder;
-
-    @Autowired
     private UserService userService;
+    private ProjectService projectService;
+    private NotificationService notificationService;
 
     @Autowired
     public AppController(UserRepository userRepository,
                          ProjectRepository projectRepository,
                          NoteRepository noteRepository,
                          ResetPasswordRepository resetPasswordRepository,
-                         PasswordEncoder passwordEncoder) {
+                         PasswordEncoder passwordEncoder,
+                         UserService userService,
+                         ProjectService projectService,
+                         NotificationService notificationService) {
         this.userRepository = userRepository;
         this.projectRepository = projectRepository;
         this.noteRepository = noteRepository;
         this.resetPasswordRepository = resetPasswordRepository;
         this.passwordEncoder = passwordEncoder;
+        this.userService = userService;
+        this.projectService = projectService;
+        this.notificationService = notificationService;
     }
-
 
     @GetMapping(value = "/")
     public String index(Principal principal, Model model) {
@@ -134,7 +148,8 @@ public class AppController {
             return "signup";
         }
         if (userRepository.getUserByUsername(signUpRq.getUsername()).isPresent()){
-            model.addAttribute("usernameError", "Пользователь с таким именем уже существует");
+//            model.addAttribute("usernameError", "Пользователь с таким именем уже существует");
+            errors.rejectValue("username", "username.exist", "Пользователь с таким именем уже существует");
             return "signup";
         }
         if (userRepository.getUserByEmail(signUpRq.getEmail()).isPresent()){
@@ -387,7 +402,13 @@ public class AppController {
                     model.addAttribute("memberStatus", new ProjectChangeMemberStatusRq());
                     return "user/editProject";
                 } else {
-                    return "redirect:/error";
+                    model.addAttribute("request", ProjectAccessRequestType.GRANT_EDITOR_RIGHTS);
+                    model.addAttribute("projectId", projectId);
+                    model.addAttribute("owner", username);
+                    model.addAttribute("sendComplete",
+                            projectService.hasActiveRequests(projectId, principal.getName(),
+                                    ProjectAccessRequestType.GRANT_EDITOR_RIGHTS));
+                    return "notEnoughRights";
                 }
             } else {
                 return "redirect:/error";
@@ -430,7 +451,13 @@ public class AppController {
                         return "redirect:/" + username;
                     }
                 } else {
-                    return "redirect:/error";
+                    model.addAttribute("request", ProjectAccessRequestType.GRANT_EDITOR_RIGHTS);
+                    model.addAttribute("projectId", projectId);
+                    model.addAttribute("owner", username);
+                    model.addAttribute("sendComplete",
+                            projectService.hasActiveRequests(projectId, principal.getName(),
+                                    ProjectAccessRequestType.GRANT_EDITOR_RIGHTS));
+                    return "notEnoughRights";
                 }
             } else {
                 return "redirect:/error";
@@ -460,7 +487,13 @@ public class AppController {
                     userRepository.save(projectUser);
                     return "redirect:/" + username;
                 } else {
-                    return "redirect:/error";
+                    model.addAttribute("request", ProjectAccessRequestType.GRANT_EDITOR_RIGHTS);
+                    model.addAttribute("projectId", projectId);
+                    model.addAttribute("owner", username);
+                    model.addAttribute("sendComplete",
+                            projectService.hasActiveRequests(projectId, principal.getName(),
+                                    ProjectAccessRequestType.GRANT_EDITOR_RIGHTS));
+                    return "notEnoughRights";
                 }
             } else {
                 return "redirect:/error";
@@ -522,7 +555,13 @@ public class AppController {
                         }
                     }
                 } else {
-                    return "redirect:/error";
+                    model.addAttribute("request", ProjectAccessRequestType.GRANT_EDITOR_RIGHTS);
+                    model.addAttribute("projectId", projectId);
+                    model.addAttribute("owner", username);
+                    model.addAttribute("sendComplete",
+                            projectService.hasActiveRequests(projectId, principal.getName(),
+                                    ProjectAccessRequestType.GRANT_EDITOR_RIGHTS));
+                    return "notEnoughRights";
                 }
             } else {
                 return "redirect:/error";
@@ -592,7 +631,13 @@ public class AppController {
                         }
                     }
                 } else {
-                    return "redirect:/error";
+                    model.addAttribute("request", ProjectAccessRequestType.GRANT_EDITOR_RIGHTS);
+                    model.addAttribute("projectId", projectId);
+                    model.addAttribute("owner", username);
+                    model.addAttribute("sendComplete",
+                            projectService.hasActiveRequests(projectId, principal.getName(),
+                                    ProjectAccessRequestType.GRANT_EDITOR_RIGHTS));
+                    return "notEnoughRights";
                 }
             } else {
                 return "redirect:/error";
@@ -655,7 +700,125 @@ public class AppController {
                         return "redirect:/error";
                     }
                 } else {
-                    return "redirect:/error";
+                    model.addAttribute("request", ProjectAccessRequestType.GRANT_EDITOR_RIGHTS);
+                    model.addAttribute("projectId", projectId);
+                    model.addAttribute("owner", username);
+                    model.addAttribute("sendComplete",
+                            projectService.hasActiveRequests(projectId, principal.getName(),
+                                    ProjectAccessRequestType.GRANT_EDITOR_RIGHTS));
+                    return "notEnoughRights";
+                }
+            } else {
+                return "redirect:/error";
+            }
+        } else {
+            return "redirect:/error";
+        }
+    }
+
+    @PostMapping(value = "/{username}/project/{projectId}/applyRequest/{requestId}")
+    public String applyRequest(@PathVariable("username") String username,
+                                @PathVariable("projectId") long projectId,
+                                @PathVariable("requestId") long requestId,
+                                Principal principal,
+                                Model model) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        User loginUser = userRepository.getUserByUsername(principal.getName()).get();
+        if (optionalUser.isPresent()) {
+            Optional<Project> optionalProject = optionalUser.get().getProjectSet().stream()
+                    .filter(project -> project.getId() == projectId).findAny();
+            if (optionalProject.isPresent()) {
+                if (optionalProject.get().canEdit(loginUser)) {
+                    User projectUser = optionalUser.get();
+                    Project project = optionalProject.get();
+                    model.addAttribute("username", principal.getName());
+                    model.addAttribute("user", projectUser.getRelativeView(loginUser));
+                    model.addAttribute("loginUser", loginUser);
+                    model.addAttribute("role", loginUser.getRole());
+                    model.addAttribute("project", project);
+                    ProjectEditRq projectEditRq = new ProjectEditRq();
+                    projectEditRq.setTitle(project.getTitle());
+                    model.addAttribute("editProject", projectEditRq);
+                    model.addAttribute("member", new ProjectAddMemberRq());
+                    model.addAttribute("memberStatus", new ProjectChangeMemberStatusRq());
+
+                    Optional<ProjectAccessRequest> optionalProjectAccessRequest =
+                            project.getProjectAccessRequestList().stream().filter(request -> request.getId() == requestId).findAny();
+                    if (optionalProjectAccessRequest.isPresent()) {
+                        ProjectAccessRequest projectAccessRequest = optionalProjectAccessRequest.get();
+                        if (projectAccessRequest.isActive()) {
+                            projectService.acceptRequest(projectId, requestId);
+                            return String.format("redirect:/%s/project/%s/settings", username, project.getId());
+                        } else {
+                            return "redirect:/error";
+                        }
+                    } else {
+                        return "redirect:/error";
+                    }
+                } else {
+                    model.addAttribute("request", ProjectAccessRequestType.GRANT_EDITOR_RIGHTS);
+                    model.addAttribute("projectId", projectId);
+                    model.addAttribute("owner", username);
+                    model.addAttribute("sendComplete",
+                            projectService.hasActiveRequests(projectId, principal.getName(),
+                                    ProjectAccessRequestType.GRANT_EDITOR_RIGHTS));
+                    return "notEnoughRights";
+                }
+            } else {
+                return "redirect:/error";
+            }
+        } else {
+            return "redirect:/error";
+        }
+    }
+
+    @PostMapping(value = "/{username}/project/{projectId}/denyRequest/{requestId}")
+    public String denyRequest(@PathVariable("username") String username,
+                               @PathVariable("projectId") long projectId,
+                               @PathVariable("requestId") long requestId,
+                               Principal principal,
+                               Model model) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        User loginUser = userRepository.getUserByUsername(principal.getName()).get();
+        if (optionalUser.isPresent()) {
+            Optional<Project> optionalProject = optionalUser.get().getProjectSet().stream()
+                    .filter(project -> project.getId() == projectId).findAny();
+            if (optionalProject.isPresent()) {
+                if (optionalProject.get().canEdit(loginUser)) {
+                    User projectUser = optionalUser.get();
+                    Project project = optionalProject.get();
+                    model.addAttribute("username", principal.getName());
+                    model.addAttribute("user", projectUser.getRelativeView(loginUser));
+                    model.addAttribute("loginUser", loginUser);
+                    model.addAttribute("role", loginUser.getRole());
+                    model.addAttribute("project", project);
+                    ProjectEditRq projectEditRq = new ProjectEditRq();
+                    projectEditRq.setTitle(project.getTitle());
+                    model.addAttribute("editProject", projectEditRq);
+                    model.addAttribute("member", new ProjectAddMemberRq());
+                    model.addAttribute("memberStatus", new ProjectChangeMemberStatusRq());
+
+                    Optional<ProjectAccessRequest> optionalProjectAccessRequest =
+                            project.getProjectAccessRequestList().stream().filter(request -> request.getId() == requestId).findAny();
+                    if (optionalProjectAccessRequest.isPresent()) {
+                        ProjectAccessRequest projectAccessRequest = optionalProjectAccessRequest.get();
+                        if (projectAccessRequest.isActive()) {
+                            projectService.denyRequest(projectId, requestId);
+                            return String.format("redirect:/%s/project/%s/settings", username, project.getId());
+                        } else {
+                            return "redirect:/error";
+                        }
+                    } else {
+                        return "redirect:/error";
+                    }
+                } else {
+                    model.addAttribute("request", ProjectAccessRequestType.GRANT_EDITOR_RIGHTS);
+                    model.addAttribute("projectId", projectId);
+                    model.addAttribute("owner", username);
+                    model.addAttribute("sendComplete",
+                            projectService.hasActiveRequests(projectId, principal.getName(),
+                                    ProjectAccessRequestType.GRANT_EDITOR_RIGHTS));
+                    return "notEnoughRights";
                 }
             } else {
                 return "redirect:/error";
@@ -687,7 +850,13 @@ public class AppController {
                     model.addAttribute("note", new NoteRq());
                     return "user/addNote";
                 } else {
-                    return "redirect:/error";
+                    model.addAttribute("request", ProjectAccessRequestType.GRANT_EDITOR_RIGHTS);
+                    model.addAttribute("projectId", projectId);
+                    model.addAttribute("owner", username);
+                    model.addAttribute("sendComplete",
+                            projectService.hasActiveRequests(projectId, principal.getName(),
+                                    ProjectAccessRequestType.GRANT_EDITOR_RIGHTS));
+                    return "notEnoughRights";
                 }
             } else {
                 return "redirect:/error";
@@ -733,7 +902,13 @@ public class AppController {
                         return "redirect:/" + username;
                     }
                 } else {
-                    return "redirect:/error";
+                    model.addAttribute("request", ProjectAccessRequestType.GRANT_EDITOR_RIGHTS);
+                    model.addAttribute("projectId", projectId);
+                    model.addAttribute("owner", username);
+                    model.addAttribute("sendComplete",
+                            projectService.hasActiveRequests(projectId, principal.getName(),
+                                    ProjectAccessRequestType.GRANT_EDITOR_RIGHTS));
+                    return "notEnoughRights";
                 }
             } else {
                 return "redirect:/error";
@@ -770,7 +945,13 @@ public class AppController {
                         model.addAttribute("canEdit", optionalNote.get().canEdit(project, loginUser));
                         return "user/viewNote";
                     } else {
-                        return "redirect:/error";
+                        model.addAttribute("request", ProjectAccessRequestType.GRANT_SPECTATOR_RIGHTS);
+                        model.addAttribute("projectId", projectId);
+                        model.addAttribute("owner", username);
+                        model.addAttribute("sendComplete",
+                                projectService.hasActiveRequests(projectId, principal.getName(),
+                                        ProjectAccessRequestType.GRANT_SPECTATOR_RIGHTS));
+                        return "notEnoughRights";
                     }
                 } else {
                     return "redirect:/error";
@@ -826,7 +1007,13 @@ public class AppController {
                         model.addAttribute("canDelete", optionalNote.get().canDelete(project, loginUser));
                         return "user/editNote";
                     } else {
-                        return "redirect:/error";
+                        model.addAttribute("request", ProjectAccessRequestType.GRANT_MODERATOR_RIGHTS);
+                        model.addAttribute("projectId", projectId);
+                        model.addAttribute("owner", username);
+                        model.addAttribute("sendComplete",
+                                projectService.hasActiveRequests(projectId, principal.getName(),
+                                        ProjectAccessRequestType.GRANT_MODERATOR_RIGHTS));
+                        return "notEnoughRights";
                     }
                 } else {
                     return "redirect:/error";
@@ -880,7 +1067,13 @@ public class AppController {
                             return String.format("redirect:/%s/project/%s/note/%s", username, project.getId(), note.getId());
                         }
                     } else {
-                        return "redirect:/error";
+                        model.addAttribute("request", ProjectAccessRequestType.GRANT_MODERATOR_RIGHTS);
+                        model.addAttribute("projectId", projectId);
+                        model.addAttribute("owner", username);
+                        model.addAttribute("sendComplete",
+                                projectService.hasActiveRequests(projectId, principal.getName(),
+                                        ProjectAccessRequestType.GRANT_MODERATOR_RIGHTS));
+                        return "notEnoughRights";
                     }
                 } else {
                     return "redirect:/error";
@@ -928,7 +1121,13 @@ public class AppController {
 
                         return "redirect:/" + username;
                     } else {
-                        return "redirect:/error";
+                        model.addAttribute("request", ProjectAccessRequestType.GRANT_EDITOR_RIGHTS);
+                        model.addAttribute("projectId", projectId);
+                        model.addAttribute("owner", username);
+                        model.addAttribute("sendComplete",
+                                projectService.hasActiveRequests(projectId, principal.getName(),
+                                        ProjectAccessRequestType.GRANT_EDITOR_RIGHTS));
+                        return "notEnoughRights";
                     }
                 } else {
                     return "redirect:/error";
@@ -1211,6 +1410,80 @@ public class AppController {
 //                editUser.setStatus(user.getStatus().toString());
 //                model.addAttribute("editUser", editUser);
                 return "redirect:/admin/editUser/" + username;
+            } else {
+                return "redirect:/error";
+            }
+        } else {
+            return "redirect:/error";
+        }
+    }
+
+    @GetMapping(value = "/{username}/notifications")
+    public String getNotifications(@PathVariable("username") String username, Principal principal, Model model) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        User loginUser = userRepository.getUserByUsername(principal.getName()).get();
+        if (optionalUser.isPresent() && principal.getName().equals(username)) {
+            model.addAttribute("username", principal.getName());
+            model.addAttribute("user", optionalUser.get());
+            model.addAttribute("loginUser", loginUser);
+            return "user/notifications";
+        } else {
+            return "redirect:/" + username + "/notifications";
+        }
+    }
+
+    @PostMapping(value = "/{username}/notifications/readNotification/{notificationId}")
+    public String readNotification(@PathVariable("username") String username,
+                                   @PathVariable("notificationId") long notificationId,
+                                   Principal principal,
+                                   Model model) {
+        Optional<User> optionalUser = userRepository.getUserByUsername(username);
+        User loginUser = userRepository.getUserByUsername(principal.getName()).get();
+        if (optionalUser.isPresent() && principal.getName().equals(username)) {
+            User user = optionalUser.get();
+            Optional<Notification> optionalNotification = user.getNotificationList().stream()
+                    .filter(notification -> notification.getId() == notificationId).findAny();
+            if (optionalNotification.isPresent()) {
+                model.addAttribute("username", principal.getName());
+                model.addAttribute("user", optionalUser.get());
+                model.addAttribute("loginUser", loginUser);
+                notificationService.setNotificationRead(username, notificationId);
+                return "redirect:/" + username + "/notifications";
+            } else {
+                return "redirect:/error";
+            }
+        } else {
+            return "redirect:/" + username + "/notifications";
+        }
+    }
+
+    @PostMapping(value = "/request/getProjectRights")
+    public String requestProjectRights(@ModelAttribute @Valid ProjectAccessRq projectAccessRq,
+                                       Errors errors,
+                                       Principal principal,
+                                       Model model) {
+        if (errors.hasErrors()) {
+            logger.error(String.format("Некорректная работа механизма запроса доступа к проекту произошла у пользователя %s", principal.getName()));
+            return "redirect:/error";
+        }
+        Optional<User> optionalUser = userRepository.getUserByUsername(projectAccessRq.getOwner());
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            Optional<Project> optionalProject = user.getProjectSet().stream()
+                    .filter(project -> project.getId() == projectAccessRq.getProjectId()).findAny();
+            if (optionalProject.isPresent()) {
+                Project project = optionalProject.get();
+                ProjectAccessRequestType requestType = projectAccessRq.getRequest().equals("GRANT_SPECTATOR_RIGHTS") ?
+                        ProjectAccessRequestType.GRANT_SPECTATOR_RIGHTS :
+                        projectAccessRq.getRequest().equals("GRANT_MODERATOR_RIGHTS") ?
+                                ProjectAccessRequestType.GRANT_MODERATOR_RIGHTS :
+                                ProjectAccessRequestType.GRANT_EDITOR_RIGHTS;
+                if (!projectService.hasActiveRequests(projectAccessRq.getProjectId(), principal.getName(), requestType)) {
+                    projectService.makeRequest(projectAccessRq.getProjectId(), principal.getName(), requestType);
+                    return "redirect:/";
+                } else {
+                    return "redirect:/error";
+                }
             } else {
                 return "redirect:/error";
             }

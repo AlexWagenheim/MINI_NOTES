@@ -22,7 +22,7 @@ public class Application {
     @Bean
     public ApplicationRunner buildIndex(Indexer indexer) throws Exception {
         return (ApplicationArguments args) -> {
-            indexer.indexPersistedData("ru.mininotes.core.domain.User");
+            indexer.indexPersistedData("ru.mininotes.core.domain.user.User");
         };
     }
 }

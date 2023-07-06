@@ -17,6 +17,7 @@
         <input type="hidden" name="var" value="val">
     </form>
 
+    <span th:if="${loginUser.hasNewNotification}"><img th:src="@{/images/iconmonstr-notification-lined-24.png}"></span>
     <span class="fs-5 text-primary fw-bold ms-2 me-2 mt-1" th:text="${username}"></span>
 
     <div class="dropdown text-end mt-1">
@@ -29,6 +30,10 @@
             <!--            <li><a class="dropdown-item" href="#">Настройки</a></li>-->
             <li><a class="dropdown-item" href="/" >Профиль</a></li>
             <li><a th:if="${#strings.equals(role, 'ROLE_ADMIN')}" class="dropdown-item" href="/admin/userList" >Пользователи</a></li>
+            <li class="d-flex justify-content-between">
+                <a class="dropdown-item" th:href="@{/{username}/notifications(username=${username})}">Уведомления</a>
+                <img class="me-2" style="width: 24px; height: 24px;" th:if="${loginUser.hasNewNotification}" th:src="@{/images/iconmonstr-notification-lined-24.png}">
+            </li>
             <li><a class="dropdown-item" th:href="@{/{username}/bin(username=${username})}">Корзина</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="#" th:onclick="document.getElementById('logout_form').submit();">Выйти</a></li>

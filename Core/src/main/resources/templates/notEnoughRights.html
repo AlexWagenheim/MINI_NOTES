@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <title>Недостаточно прав</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" th:href="@{/node_modules/bootstrap/dist/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/styles/login.css}">
+    <script th:src="@{/node_modules/bootstrap/dist/js/bootstrap.min.js}"></script>
+</head>
+<body class="text-center">
+<main class="form-signin">
+    <form th:action="@{/request/getProjectRights}" method="post">
+        <img class="mb-4" th:src="@{/images/iconmonstr-lock-22-240.png}" alt="">
+        <h1 class="h3 mb-3 fw-normal">У Вас недостаточно прав для просмотра этой страницы</h1>
+
+        <div class="form-floating">
+            <input type="text" class="form-control" hidden name="request" th:value="${request}">
+        </div>
+        <div class="form-floating">
+            <input type="text" class="form-control" hidden name="projectId" th:value="${projectId}">
+        </div>
+        <div class="form-floating">
+            <input type="text" class="form-control" hidden name="owner" th:value="${owner}">
+        </div>
+
+        <button class="w-100 btn btn-lg btn-primary mt-3" type="submit" th:if="${!sendComplete}">Запросить доступ</button>
+        <div th:if="${sendComplete}">
+            Ваш запрос на предоставление доступа ещё не рассмотрен
+        </div>
+        <a class="btn btn-outline-primary mt-3" href="/" role="button">На главную</a>
+    </form>
+</main>
+</body>
+</html>

@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.MailException;
 import org.springframework.stereotype.Service;
-import ru.mininotes.core.domain.User;
+import ru.mininotes.core.domain.user.User;
 import ru.mininotes.core.mail.service.EmailService;
 import ru.mininotes.core.repository.UserRepository;
 

@@ -1,4 +1,4 @@
-package ru.mininotes.core.domain;
+package ru.mininotes.core.domain.user;
 
 /**
  * статус учётной записи <b>пользователя</b> {@link User}

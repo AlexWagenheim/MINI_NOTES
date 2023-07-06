@@ -1,12 +1,13 @@
-package ru.mininotes.core.domain;
+package ru.mininotes.core.domain.project;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import ru.mininotes.core.domain.note.Note;
+import ru.mininotes.core.domain.user.User;
+import ru.mininotes.core.domain.user.UserRole;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -47,23 +48,27 @@ public class Project {
     /** Список пользователей {@link User}, способных
      * просматривать/создавать/редактировать/удалять все заметки {@link Note} в проекте
      * */
-    Set<User> editorGroup = new HashSet<>();
+    private Set<User> editorGroup = new HashSet<>();
 
     @ManyToMany
     /** Список пользователей {@link User}, способных
      * просматривать/редактировать все заметки {@link Note} в проекте
      * */
-    Set<User> moderatorGroup = new HashSet<>();
+     private Set<User> moderatorGroup = new HashSet<>();
 
     @ManyToMany
     /** Список пользователей {@link User}, способных
      * просматривать все заметки {@link Note} в проекте
      * */
-    Set<User> spectatorGroup = new HashSet<>();
+    private Set<User> spectatorGroup = new HashSet<>();
 
     /** Список заметок {@link Note} в проекте */
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
-    Set<Note> noteSet = new HashSet<>();
+    private Set<Note> noteSet = new HashSet<>();
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProjectAccessRequest> projectAccessRequestList = new ArrayList<>();
+
 
     public Project() {
     }
@@ -149,6 +154,16 @@ public class Project {
         return view;
     }
 
+    public void addAccessRequest(ProjectAccessRequest projectAccessRequest) {
+        projectAccessRequestList.add(0, projectAccessRequest);
+        projectAccessRequest.setProject(this);
+    }
+
+    public void removeAccessRequest(ProjectAccessRequest projectAccessRequest) {
+        projectAccessRequestList.remove(projectAccessRequest);
+        projectAccessRequest.setProject(null);
+    }
+
     public long getId() {
         return id;
     }
@@ -227,5 +242,13 @@ public class Project {
 
     public void setNoteSet(Set<Note> noteSet) {
         this.noteSet = noteSet;
+    }
+
+    public List<ProjectAccessRequest> getProjectAccessRequestList() {
+        return projectAccessRequestList;
+    }
+
+    public void setProjectAccessRequestList(List<ProjectAccessRequest> projectAccessRequestList) {
+        this.projectAccessRequestList = projectAccessRequestList;
     }
 }

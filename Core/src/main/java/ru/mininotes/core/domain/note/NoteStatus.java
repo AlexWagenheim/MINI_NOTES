@@ -1,4 +1,6 @@
-package ru.mininotes.core.domain;
+package ru.mininotes.core.domain.note;
+
+import ru.mininotes.core.domain.note.Note;
 
 /**
  * статус <b>заметки</b> {@link Note}

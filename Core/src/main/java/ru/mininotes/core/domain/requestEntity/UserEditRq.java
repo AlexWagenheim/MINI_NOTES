@@ -3,8 +3,6 @@ package ru.mininotes.core.domain.requestEntity;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import ru.mininotes.core.domain.UserRole;
-import ru.mininotes.core.domain.UserStatus;
 
 public class UserEditRq {
 

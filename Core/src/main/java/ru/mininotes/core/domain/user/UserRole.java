@@ -1,4 +1,4 @@
-package ru.mininotes.core.domain;
+package ru.mininotes.core.domain.user;
 
 /**
  * доступные роли <b>пользователя</b> {@link User}

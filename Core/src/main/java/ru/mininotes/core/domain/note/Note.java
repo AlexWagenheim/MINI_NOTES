@@ -1,8 +1,10 @@
-package ru.mininotes.core.domain;
+package ru.mininotes.core.domain.note;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import ru.mininotes.core.domain.user.User;
+import ru.mininotes.core.domain.project.Project;
 
 import java.util.Date;
 

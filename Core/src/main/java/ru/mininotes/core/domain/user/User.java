@@ -1,4 +1,4 @@
-package ru.mininotes.core.domain;
+package ru.mininotes.core.domain.user;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -11,11 +11,11 @@ import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import ru.mininotes.core.domain.note.Note;
+import ru.mininotes.core.domain.notification.Notification;
+import ru.mininotes.core.domain.project.Project;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -53,6 +53,10 @@ public class User implements UserDetails {
     /** роль (уровень доступа) {@link UserRole} пользователя */
     private UserRole role;
 
+    @NotNull
+    /** имеет ли пользователь непрочитанные уведомления */
+    private boolean hasNewNotification;
+
     /** список проектов (папок) {@link Project} пользователя,
      * для которых он является владельцем
      * */
@@ -62,6 +66,9 @@ public class User implements UserDetails {
     /** список удалённых заметок {@link Note} пользователя */
     @OneToMany()
     Set<Note> deletedNoteSet = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<Notification> notificationList = new ArrayList<>();
 
     public User() {
     }
@@ -98,6 +105,12 @@ public class User implements UserDetails {
         view.setProjectSet(view.getProjectSet().stream().map(project -> project.getRelativeView(user)).collect(Collectors.toSet()));
 
         return view;
+    }
+
+    public void addNotification(Notification notification) {
+        notification.setHasRead(false);
+        notificationList.add(notification);
+        notification.setUser(this);
     }
 
     @Override
@@ -189,6 +202,22 @@ public class User implements UserDetails {
 
     public void setDeletedNoteSet(Set<Note> deletedNoteSet) {
         this.deletedNoteSet = deletedNoteSet;
+    }
+
+    public List<Notification> getNotificationList() {
+        return notificationList;
+    }
+
+    public void setNotificationList(List<Notification> notificationList) {
+        this.notificationList = notificationList;
+    }
+
+    public boolean isHasNewNotification() {
+        return hasNewNotification;
+    }
+
+    public void setHasNewNotification(boolean hasNewNotification) {
+        this.hasNewNotification = hasNewNotification;
     }
 
 }

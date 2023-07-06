@@ -1,12 +1,8 @@
 package ru.mininotes.core.domain.requestEntity;
 
-import jakarta.persistence.ManyToMany;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import ru.mininotes.core.domain.Note;
-import ru.mininotes.core.domain.User;
 
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
