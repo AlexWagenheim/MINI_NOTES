@@ -79,6 +79,7 @@ public class User implements UserDetails {
         this.password = password;
         this.status = status;
         this.role = role;
+        this.hasNewNotification = false;
     }
 
     public void addProject(Project project) {
